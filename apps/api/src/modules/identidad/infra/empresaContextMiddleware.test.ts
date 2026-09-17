@@ -29,7 +29,7 @@ describe("empresaContextMiddleware (nota 06, seccion 3 — doble validacion)", (
     const middleware = createEmpresaContextMiddleware(repo);
     const req = buildReq({
       auth: { usuarioId: "u1", tenantId: TENANT_A, rolGlobal: "ASISTENTE" },
-      __header_x_empresa_id: EMPRESA_X,
+      "__header_x-empresa-id": EMPRESA_X,
     } as unknown as Partial<Request>);
     const next = vi.fn();
 
@@ -50,7 +50,7 @@ describe("empresaContextMiddleware (nota 06, seccion 3 — doble validacion)", (
     const middleware = createEmpresaContextMiddleware(repo);
     const req = buildReq({
       auth: { usuarioId: "u1", tenantId: TENANT_A, rolGlobal: "ASISTENTE" },
-      __header_x_empresa_id: EMPRESA_X,
+      "__header_x-empresa-id": EMPRESA_X,
     } as unknown as Partial<Request>);
 
     await expect(middleware(req, {} as Response, vi.fn())).rejects.toMatchObject({
@@ -66,7 +66,7 @@ describe("empresaContextMiddleware (nota 06, seccion 3 — doble validacion)", (
     const middleware = createEmpresaContextMiddleware(repo);
     const req = buildReq({
       auth: { usuarioId: "u1", tenantId: TENANT_A, rolGlobal: "ASISTENTE" },
-      __header_x_empresa_id: EMPRESA_X,
+      "__header_x-empresa-id": EMPRESA_X,
     } as unknown as Partial<Request>);
 
     await expect(middleware(req, {} as Response, vi.fn())).rejects.toMatchObject({
