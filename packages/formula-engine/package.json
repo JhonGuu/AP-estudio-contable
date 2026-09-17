@@ -1,0 +1,26 @@
+{
+  "name": "@ap-contadores/formula-engine",
+  "private": true,
+  "version": "0.0.1",
+  "description": "Parser y evaluador sandboxed de formulas (sin eval()), compartido entre el motor de asientos (contabilidad) y el motor de liquidacion (sueldos)",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "lint": "echo \"(lint pendiente de configurar)\""
+  },
+  "devDependencies": {
+    "typescript": "^5.7.3",
+    "vitest": "^2.1.8"
+  }
+}

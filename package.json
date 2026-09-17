@@ -1,0 +1,26 @@
+{
+  "name": "ap-contadores",
+  "private": true,
+  "version": "0.0.1",
+  "description": "AP-Contadores — SaaS multi-tenant de gestion contable para estudios contables (Argentina)",
+  "license": "UNLICENSED",
+  "engines": {
+    "node": ">=20.0.0",
+    "pnpm": ">=9.0.0"
+  },
+  "packageManager": "pnpm@10.28.0",
+  "scripts": {
+    "dev:api": "pnpm --filter @ap-contadores/api dev",
+    "dev:web": "pnpm --filter @ap-contadores/web dev",
+    "build": "pnpm -r --workspace-concurrency=1 build",
+    "typecheck": "pnpm -r typecheck",
+    "test": "pnpm -r test",
+    "lint": "pnpm -r lint",
+    "db:generate": "pnpm --filter @ap-contadores/api db:generate",
+    "db:migrate": "pnpm --filter @ap-contadores/api db:migrate",
+    "db:seed": "pnpm --filter @ap-contadores/api db:seed"
+  },
+  "devDependencies": {
+    "typescript": "^5.7.3"
+  }
+}
