@@ -1,14 +1,21 @@
+import { useState } from "react";
 import { toast } from "sonner";
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useProveedores } from "@/lib/proveedores";
 import { usePuntosVenta } from "@/lib/comprobantes-catalogo";
-import { useComprobantesCompra, useConfirmarComprobanteCompra, type EstadoComprobanteCompra } from "@/lib/compras-comprobantes";
+import {
+  useComprobantesCompra,
+  useConfirmarComprobanteCompra,
+  type ComprobanteCompra,
+  type EstadoComprobanteCompra,
+} from "@/lib/compras-comprobantes";
 import { ApiError } from "@/lib/api-client";
 import { formatFechaISO } from "@/lib/fecha";
 import { NuevoPuntoVentaDialog } from "@/pages/comprobantes/NuevoPuntoVentaDialog";
 import { NuevoComprobanteCompraDialog } from "./NuevoComprobanteCompraDialog";
+import { RegistrarPagoDialog } from "./RegistrarPagoDialog";
 
 const ESTADO_VARIANT: Record<EstadoComprobanteCompra, "default" | "success" | "warning" | "destructive"> = {
   BORRADOR: "warning",
@@ -21,6 +28,7 @@ export function ComprobantesCompraPage() {
   const puntosVentaQuery = usePuntosVenta();
   const comprobantesQuery = useComprobantesCompra();
   const confirmar = useConfirmarComprobanteCompra();
+  const [comprobanteAPagar, setComprobanteAPagar] = useState<ComprobanteCompra | null>(null);
 
   const proveedorNombre = (id: string) => proveedoresQuery.data?.find((p) => p.id === id)?.razonSocial ?? "-";
 
@@ -92,6 +100,11 @@ export function ComprobantesCompraPage() {
                         Confirmar
                       </Button>
                     )}
+                    {c.estado === "CONFIRMADO" && Number(c.saldoPendiente) > 0 && (
+                      <Button size="sm" variant="outline" onClick={() => setComprobanteAPagar(c)}>
+                        Pagar
+                      </Button>
+                    )}
                   </TableCell>
                 </TableRow>
               ))}
@@ -99,6 +112,14 @@ export function ComprobantesCompraPage() {
           </Table>
         )}
       </div>
+
+      <RegistrarPagoDialog
+        comprobante={comprobanteAPagar}
+        proveedorNombre={comprobanteAPagar ? proveedorNombre(comprobanteAPagar.proveedorId) : ""}
+        onOpenChange={(open) => {
+          if (!open) setComprobanteAPagar(null);
+        }}
+      />
     </div>
   );
 }
