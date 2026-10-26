@@ -6,6 +6,7 @@ import type { Container } from "inversify";
 import { env } from "./config/env.js";
 import { logger } from "./shared/logger.js";
 import { createErrorHandler } from "./shared/http/errorHandler.js";
+import { buildCatalogosRouter } from "./modules/catalogos/routes.js";
 import { buildIdentidadRouter } from "./modules/identidad/routes.js";
 import { buildComprobantesRouter } from "./modules/comprobantes/routes.js";
 import { buildComprasRouter } from "./modules/compras/routes.js";
@@ -31,6 +32,7 @@ export function buildApp(container: Container): Express {
   // Cada modulo nuevo (contabilidad, compras, ventas, fiscal, tesoreria,
   // stock, sueldos) monta aca su propio router, con empresaContextMiddleware
   // en las rutas que lo necesiten (identidad no lo necesita — nota 06).
+  app.use(buildCatalogosRouter(container));
   app.use(buildIdentidadRouter(container));
   app.use(buildComprobantesRouter(container));
   app.use("/compras", buildComprasRouter(container));

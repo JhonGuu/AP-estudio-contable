@@ -22,6 +22,10 @@ export const authStorage = {
     localStorage.setItem(EMPRESA_ACTIVA_KEY, empresaId);
   },
 
+  clearEmpresaActiva(): void {
+    localStorage.removeItem(EMPRESA_ACTIVA_KEY);
+  },
+
   clear(): void {
     localStorage.removeItem(ACCESS_TOKEN_KEY);
     localStorage.removeItem(REFRESH_TOKEN_KEY);

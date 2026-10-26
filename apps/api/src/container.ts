@@ -3,6 +3,9 @@ import { Container } from "inversify";
 import { TYPES } from "./types.js";
 import { db, type Database } from "./shared/db/client.js";
 
+import { CatalogoRepository } from "./modules/catalogos/infra/CatalogoRepository.js";
+import { ObtenerCatalogos } from "./modules/catalogos/use-cases/ObtenerCatalogos.js";
+
 import { TenantRepository } from "./modules/identidad/infra/TenantRepository.js";
 import { UsuarioRepository } from "./modules/identidad/infra/UsuarioRepository.js";
 import { EmpresaRepository } from "./modules/identidad/infra/EmpresaRepository.js";
@@ -81,6 +84,10 @@ export function buildContainer(): Container {
   const container = new Container();
 
   container.bind<Database>(TYPES.Database).toConstantValue(db);
+
+  // --- catalogos ---
+  container.bind(CatalogoRepository).toSelf().inSingletonScope();
+  container.bind(ObtenerCatalogos).toSelf();
 
   // --- identidad: infra ---
   container.bind(TenantRepository).toSelf().inSingletonScope();

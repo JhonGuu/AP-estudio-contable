@@ -1,20 +1,18 @@
 import { Outlet, createRootRoute, createRoute, createRouter } from "@tanstack/react-router";
-import { DashboardPage } from "./pages/DashboardPage";
 import { LoginPage } from "./pages/LoginPage";
+import { HomePage } from "./pages/HomePage";
+import { ProveedoresPage } from "./pages/proveedores/ProveedoresPage";
+import { ProtectedLayout } from "./components/layout/ProtectedLayout";
 
 /**
  * Ruteo "code-based" de TanStack Router (sin el plugin de generacion de
- * archivos): mas facil de mantener a mano en las primeras pantallas, se puede
- * migrar a file-based routing mas adelante sin cambiar la libreria.
+ * archivos). /login queda afuera del layout protegido; todo lo demas cuelga
+ * de protectedRoute, que provee la sesion y el shell (sidebar + topbar con
+ * la empresa activa — nota 06, seccion 5) y renderiza las paginas de modulo
+ * en su Outlet.
  */
 const rootRoute = createRootRoute({
   component: () => <Outlet />,
-});
-
-const indexRoute = createRoute({
-  getParentRoute: () => rootRoute,
-  path: "/",
-  component: DashboardPage,
 });
 
 const loginRoute = createRoute({
@@ -23,7 +21,28 @@ const loginRoute = createRoute({
   component: LoginPage,
 });
 
-const routeTree = rootRoute.addChildren([indexRoute, loginRoute]);
+const protectedRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  id: "protected",
+  component: ProtectedLayout,
+});
+
+const homeRoute = createRoute({
+  getParentRoute: () => protectedRoute,
+  path: "/",
+  component: HomePage,
+});
+
+const proveedoresRoute = createRoute({
+  getParentRoute: () => protectedRoute,
+  path: "/proveedores",
+  component: ProveedoresPage,
+});
+
+const routeTree = rootRoute.addChildren([
+  loginRoute,
+  protectedRoute.addChildren([homeRoute, proveedoresRoute]),
+]);
 
 export const router = createRouter({ routeTree });
 
