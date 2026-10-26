@@ -9,6 +9,7 @@ const NAV_ITEMS = [
   { to: "/proveedores", label: "Proveedores" },
   { to: "/clientes", label: "Clientes" },
   { to: "/comprobantes-compra", label: "Comprobantes de compra" },
+  { to: "/comprobantes-venta", label: "Comprobantes de venta" },
 ];
 
 /**

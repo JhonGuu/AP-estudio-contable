@@ -4,6 +4,7 @@ import { HomePage } from "./pages/HomePage";
 import { ProveedoresPage } from "./pages/proveedores/ProveedoresPage";
 import { ClientesPage } from "./pages/clientes/ClientesPage";
 import { ComprobantesCompraPage } from "./pages/comprobantes-compra/ComprobantesCompraPage";
+import { ComprobantesVentaPage } from "./pages/comprobantes-venta/ComprobantesVentaPage";
 import { ProtectedLayout } from "./components/layout/ProtectedLayout";
 
 /**
@@ -53,9 +54,21 @@ const comprobantesCompraRoute = createRoute({
   component: ComprobantesCompraPage,
 });
 
+const comprobantesVentaRoute = createRoute({
+  getParentRoute: () => protectedRoute,
+  path: "/comprobantes-venta",
+  component: ComprobantesVentaPage,
+});
+
 const routeTree = rootRoute.addChildren([
   loginRoute,
-  protectedRoute.addChildren([homeRoute, proveedoresRoute, clientesRoute, comprobantesCompraRoute]),
+  protectedRoute.addChildren([
+    homeRoute,
+    proveedoresRoute,
+    clientesRoute,
+    comprobantesCompraRoute,
+    comprobantesVentaRoute,
+  ]),
 ]);
 
 export const router = createRouter({ routeTree });
