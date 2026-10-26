@@ -24,7 +24,7 @@ export function HomePage() {
           <CardDescription>Modulos disponibles para esta empresa.</CardDescription>
         </CardHeader>
         <CardContent className="text-sm text-slate-600">
-          Por ahora: Proveedores. El resto (clientes, comprobantes de compra/venta, pagos/cobros y
+          Por ahora: Proveedores y Clientes. El resto (comprobantes de compra/venta, pagos/cobros y
           tesoreria) ya funciona en el servidor y se va agregando pantalla por pantalla.
         </CardContent>
       </Card>

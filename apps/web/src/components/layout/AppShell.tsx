@@ -7,6 +7,7 @@ import { NuevaEmpresaDialog } from "@/pages/empresas/NuevaEmpresaDialog";
 const NAV_ITEMS = [
   { to: "/", label: "Inicio" },
   { to: "/proveedores", label: "Proveedores" },
+  { to: "/clientes", label: "Clientes" },
 ];
 
 /**

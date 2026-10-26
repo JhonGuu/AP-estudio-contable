@@ -2,6 +2,7 @@ import { Outlet, createRootRoute, createRoute, createRouter } from "@tanstack/re
 import { LoginPage } from "./pages/LoginPage";
 import { HomePage } from "./pages/HomePage";
 import { ProveedoresPage } from "./pages/proveedores/ProveedoresPage";
+import { ClientesPage } from "./pages/clientes/ClientesPage";
 import { ProtectedLayout } from "./components/layout/ProtectedLayout";
 
 /**
@@ -39,9 +40,15 @@ const proveedoresRoute = createRoute({
   component: ProveedoresPage,
 });
 
+const clientesRoute = createRoute({
+  getParentRoute: () => protectedRoute,
+  path: "/clientes",
+  component: ClientesPage,
+});
+
 const routeTree = rootRoute.addChildren([
   loginRoute,
-  protectedRoute.addChildren([homeRoute, proveedoresRoute]),
+  protectedRoute.addChildren([homeRoute, proveedoresRoute, clientesRoute]),
 ]);
 
 export const router = createRouter({ routeTree });
