@@ -5,6 +5,7 @@ import { ProveedoresPage } from "./pages/proveedores/ProveedoresPage";
 import { ClientesPage } from "./pages/clientes/ClientesPage";
 import { ComprobantesCompraPage } from "./pages/comprobantes-compra/ComprobantesCompraPage";
 import { ComprobantesVentaPage } from "./pages/comprobantes-venta/ComprobantesVentaPage";
+import { TesoreriaPage } from "./pages/tesoreria/TesoreriaPage";
 import { ProtectedLayout } from "./components/layout/ProtectedLayout";
 
 /**
@@ -60,6 +61,12 @@ const comprobantesVentaRoute = createRoute({
   component: ComprobantesVentaPage,
 });
 
+const tesoreriaRoute = createRoute({
+  getParentRoute: () => protectedRoute,
+  path: "/tesoreria",
+  component: TesoreriaPage,
+});
+
 const routeTree = rootRoute.addChildren([
   loginRoute,
   protectedRoute.addChildren([
@@ -68,6 +75,7 @@ const routeTree = rootRoute.addChildren([
     clientesRoute,
     comprobantesCompraRoute,
     comprobantesVentaRoute,
+    tesoreriaRoute,
   ]),
 ]);
 
