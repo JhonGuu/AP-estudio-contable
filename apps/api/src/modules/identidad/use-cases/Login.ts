@@ -1,4 +1,4 @@
-import { injectable } from "inversify";
+import { inject, injectable } from "inversify";
 import { AppError } from "../../../shared/http/AppError.js";
 import { verifyPassword } from "../../../shared/security/password.js";
 import { signAccessToken, signRefreshToken } from "../../../shared/security/jwt.js";
@@ -23,7 +23,7 @@ export interface LoginResult {
  */
 @injectable()
 export class Login {
-  constructor(private readonly usuarioRepository: UsuarioRepository) {}
+  constructor(@inject(UsuarioRepository) private readonly usuarioRepository: UsuarioRepository) {}
 
   async ejecutar(input: LoginInput): Promise<LoginResult> {
     const usuario = await this.usuarioRepository.buscarPorEmail(input.email);

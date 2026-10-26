@@ -1,4 +1,4 @@
-import { injectable } from "inversify";
+import { inject, injectable } from "inversify";
 import { AppError } from "../../../shared/http/AppError.js";
 import { CompraComprobanteRepository } from "../infra/CompraComprobanteRepository.js";
 import { EmpresaRepository } from "../../identidad/infra/EmpresaRepository.js";
@@ -17,9 +17,9 @@ import type { EmpresaContext } from "../../../shared/http/requestContext.js";
 @injectable()
 export class ConfirmarComprobanteCompra {
   constructor(
-    private readonly compraComprobanteRepository: CompraComprobanteRepository,
-    private readonly empresaRepository: EmpresaRepository,
-    private readonly generarAsientoDesdeComprobante: GenerarAsientoDesdeComprobante,
+    @inject(CompraComprobanteRepository) private readonly compraComprobanteRepository: CompraComprobanteRepository,
+    @inject(EmpresaRepository) private readonly empresaRepository: EmpresaRepository,
+    @inject(GenerarAsientoDesdeComprobante) private readonly generarAsientoDesdeComprobante: GenerarAsientoDesdeComprobante,
   ) {}
 
   async ejecutar(context: EmpresaContext, comprobanteId: string): Promise<ComprobanteCompra> {

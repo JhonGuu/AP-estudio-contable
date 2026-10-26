@@ -1,4 +1,4 @@
-import { injectable } from "inversify";
+import { inject, injectable } from "inversify";
 import { AppError } from "../../../shared/http/AppError.js";
 import { ProveedorRepository } from "../infra/ProveedorRepository.js";
 import type { EmpresaContext } from "../../../shared/http/requestContext.js";
@@ -14,7 +14,7 @@ export interface RegistrarProveedorInput {
 /** POST /proveedores (nota 08, seccion 5). */
 @injectable()
 export class RegistrarProveedor {
-  constructor(private readonly proveedorRepository: ProveedorRepository) {}
+  constructor(@inject(ProveedorRepository) private readonly proveedorRepository: ProveedorRepository) {}
 
   async ejecutar(context: EmpresaContext, input: RegistrarProveedorInput): Promise<Proveedor> {
     const existentes = await this.proveedorRepository.listarPorEmpresa(context.empresaId);

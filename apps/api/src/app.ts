@@ -9,6 +9,8 @@ import { createErrorHandler } from "./shared/http/errorHandler.js";
 import { buildIdentidadRouter } from "./modules/identidad/routes.js";
 import { buildComprobantesRouter } from "./modules/comprobantes/routes.js";
 import { buildComprasRouter } from "./modules/compras/routes.js";
+import { buildVentasRouter } from "./modules/ventas/routes.js";
+import { buildTesoreriaRouter } from "./modules/tesoreria/routes.js";
 
 /**
  * Ensambla la app de Express a partir de un container ya construido (ver
@@ -32,6 +34,8 @@ export function buildApp(container: Container): Express {
   app.use(buildIdentidadRouter(container));
   app.use(buildComprobantesRouter(container));
   app.use("/compras", buildComprasRouter(container));
+  app.use("/ventas", buildVentasRouter(container));
+  app.use("/tesoreria", buildTesoreriaRouter(container));
 
   app.use((req, res) => {
     res.status(404).json({ error: { message: "Ruta no encontrada", code: "NOT_FOUND" } });

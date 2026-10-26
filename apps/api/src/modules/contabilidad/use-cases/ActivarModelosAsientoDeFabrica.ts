@@ -1,14 +1,20 @@
-import { injectable } from "inversify";
+import { inject, injectable } from "inversify";
 import { PlanCuentaRepository } from "../infra/PlanCuentaRepository.js";
 import { ModeloAsientoRepository } from "../infra/ModeloAsientoRepository.js";
 import type { TipoCuenta } from "../domain/CuentaContable.js";
 
 /**
  * Plan de cuentas "de fabrica" (nota 07, punto 2: "el contador despues las
- * reasigna a su propio plan de cuentas si lo necesita"). Solo incluye las
- * cuentas que referencian los 4 modelos ya implementados (compras, ventas,
- * cobros, pagos) — tesoreria/sueldos suman las suyas cuando se construyan
- * esos modulos (nota 08, seccion 6).
+ * reasigna a su propio plan de cuentas si lo necesita"). Cubre los modelos
+ * de compras/ventas/cobros/pagos y, desde que se construyo tesoreria (nota
+ * 22), tambien el modelo DEPOSITO — reusando 1.1.01.002/1.1.01.003 (que ya
+ * existian) y sirviendo ademas como cuenta_contable_id por defecto de las
+ * cajas/cuentas bancarias que de alta un usuario. sueldos suma las suyas
+ * cuando se construya ese modulo (nota 08, seccion 6).
+ *
+ * 2.1.01.004 cierra el hueco documentado en RegistrarPagoCompra: pagar a un
+ * proveedor con TARJETA (una corporativa, no la que cobra a un cliente) no
+ * tenia cuenta de fabrica y el asiento se rechazaba con ASIENTO_DESBALANCEADO.
  */
 const PLAN_CUENTAS_DE_FABRICA: { codigo: string; nombre: string; tipo: TipoCuenta }[] = [
   { codigo: "1.1.01.001", nombre: "Caja", tipo: "ACTIVO" },
@@ -22,7 +28,10 @@ const PLAN_CUENTAS_DE_FABRICA: { codigo: string; nombre: string; tipo: TipoCuent
   { codigo: "2.1.01.001", nombre: "Proveedores", tipo: "PASIVO" },
   { codigo: "2.1.01.002", nombre: "Cheques emitidos a pagar", tipo: "PASIVO" },
   { codigo: "2.1.01.003", nombre: "Retenciones a depositar", tipo: "PASIVO" },
+  { codigo: "2.1.01.004", nombre: "Tarjeta corporativa a pagar", tipo: "PASIVO" },
   { codigo: "2.1.04.001", nombre: "IVA Debito Fiscal", tipo: "PASIVO" },
+  { codigo: "2.1.04.002", nombre: "Percepciones IIBB a depositar", tipo: "PASIVO" },
+  { codigo: "2.1.04.003", nombre: "Otros impuestos a depositar", tipo: "PASIVO" },
   { codigo: "4.2.01.001", nombre: "Ventas", tipo: "RESULTADO" },
   { codigo: "5.2.02.001", nombre: "Compras y gastos", tipo: "RESULTADO" },
 ];
@@ -38,8 +47,8 @@ const PLAN_CUENTAS_DE_FABRICA: { codigo: string; nombre: string; tipo: TipoCuent
 @injectable()
 export class ActivarModelosAsientoDeFabrica {
   constructor(
-    private readonly planCuentaRepository: PlanCuentaRepository,
-    private readonly modeloAsientoRepository: ModeloAsientoRepository,
+    @inject(PlanCuentaRepository) private readonly planCuentaRepository: PlanCuentaRepository,
+    @inject(ModeloAsientoRepository) private readonly modeloAsientoRepository: ModeloAsientoRepository,
   ) {}
 
   async ejecutar(tenantId: string, empresaId: string): Promise<void> {

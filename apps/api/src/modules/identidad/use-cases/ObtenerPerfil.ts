@@ -1,4 +1,4 @@
-import { injectable } from "inversify";
+import { inject, injectable } from "inversify";
 import { AppError } from "../../../shared/http/AppError.js";
 import { UsuarioRepository } from "../infra/UsuarioRepository.js";
 import { UsuarioEmpresaRepository } from "../infra/UsuarioEmpresaRepository.js";
@@ -21,8 +21,8 @@ export interface PerfilResult {
 @injectable()
 export class ObtenerPerfil {
   constructor(
-    private readonly usuarioRepository: UsuarioRepository,
-    private readonly usuarioEmpresaRepository: UsuarioEmpresaRepository,
+    @inject(UsuarioRepository) private readonly usuarioRepository: UsuarioRepository,
+    @inject(UsuarioEmpresaRepository) private readonly usuarioEmpresaRepository: UsuarioEmpresaRepository,
   ) {}
 
   async ejecutar(usuarioId: string): Promise<PerfilResult> {

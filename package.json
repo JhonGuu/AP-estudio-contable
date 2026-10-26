@@ -2,7 +2,7 @@
   "name": "ap-contadores",
   "private": true,
   "version": "0.0.1",
-  "description": "AP-Contadores — SaaS multi-tenant de gestion contable para estudios contables (Argentina)",
+  "description": "AP-Contadores \u2014 SaaS multi-tenant de gestion contable para estudios contables (Argentina)",
   "license": "UNLICENSED",
   "engines": {
     "node": ">=20.0.0",
@@ -22,5 +22,10 @@
   },
   "devDependencies": {
     "typescript": "^5.7.3"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "bcrypt"
+    ]
   }
 }

@@ -1,4 +1,4 @@
-import { injectable } from "inversify";
+import { inject, injectable } from "inversify";
 import { AppError } from "../../../shared/http/AppError.js";
 import { hashPassword } from "../../../shared/security/password.js";
 import { TenantRepository } from "../infra/TenantRepository.js";
@@ -27,8 +27,8 @@ export interface CrearTenantResult {
 @injectable()
 export class CrearTenant {
   constructor(
-    private readonly tenantRepository: TenantRepository,
-    private readonly usuarioRepository: UsuarioRepository,
+    @inject(TenantRepository) private readonly tenantRepository: TenantRepository,
+    @inject(UsuarioRepository) private readonly usuarioRepository: UsuarioRepository,
   ) {}
 
   async ejecutar(input: CrearTenantInput): Promise<CrearTenantResult> {

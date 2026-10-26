@@ -1,4 +1,4 @@
-import { injectable } from "inversify";
+import { inject, injectable } from "inversify";
 import { FormulaEvaluator, FormulaParser } from "@ap-contadores/formula-engine";
 import { AppError } from "../../../shared/http/AppError.js";
 import { ModeloAsientoRepository } from "../infra/ModeloAsientoRepository.js";
@@ -32,9 +32,9 @@ export interface GenerarAsientoInput {
 @injectable()
 export class GenerarAsientoDesdeComprobante {
   constructor(
-    private readonly modeloAsientoRepository: ModeloAsientoRepository,
-    private readonly asientoRepository: AsientoRepository,
-    private readonly ejercicioRepository: EjercicioRepository,
+    @inject(ModeloAsientoRepository) private readonly modeloAsientoRepository: ModeloAsientoRepository,
+    @inject(AsientoRepository) private readonly asientoRepository: AsientoRepository,
+    @inject(EjercicioRepository) private readonly ejercicioRepository: EjercicioRepository,
   ) {}
 
   async ejecutar(input: GenerarAsientoInput): Promise<Asiento> {

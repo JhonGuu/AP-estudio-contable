@@ -41,6 +41,37 @@ import { ConfirmarComprobanteCompra } from "./modules/compras/use-cases/Confirma
 import { ListarComprobantesCompra } from "./modules/compras/use-cases/ListarComprobantesCompra.js";
 import { RegistrarPagoCompra } from "./modules/compras/use-cases/RegistrarPagoCompra.js";
 
+import { ClienteRepository } from "./modules/ventas/infra/ClienteRepository.js";
+import { VentaComprobanteRepository } from "./modules/ventas/infra/VentaComprobanteRepository.js";
+import { VentaCobroRepository } from "./modules/ventas/infra/VentaCobroRepository.js";
+import { RegistrarCliente } from "./modules/ventas/use-cases/RegistrarCliente.js";
+import { ListarClientes } from "./modules/ventas/use-cases/ListarClientes.js";
+import { RegistrarComprobanteVenta } from "./modules/ventas/use-cases/RegistrarComprobanteVenta.js";
+import { ConfirmarComprobanteVenta } from "./modules/ventas/use-cases/ConfirmarComprobanteVenta.js";
+import { ListarComprobantesVenta } from "./modules/ventas/use-cases/ListarComprobantesVenta.js";
+import { RegistrarCobroVenta } from "./modules/ventas/use-cases/RegistrarCobroVenta.js";
+
+import { CajaRepository } from "./modules/tesoreria/infra/CajaRepository.js";
+import { CuentaBancariaRepository } from "./modules/tesoreria/infra/CuentaBancariaRepository.js";
+import { TarjetaRepository } from "./modules/tesoreria/infra/TarjetaRepository.js";
+import { ChequeraRepository } from "./modules/tesoreria/infra/ChequeraRepository.js";
+import { ChequeRepository } from "./modules/tesoreria/infra/ChequeRepository.js";
+import { MovimientoFondoRepository } from "./modules/tesoreria/infra/MovimientoFondoRepository.js";
+import { RegistrarCaja } from "./modules/tesoreria/use-cases/RegistrarCaja.js";
+import { ListarCajas } from "./modules/tesoreria/use-cases/ListarCajas.js";
+import { RegistrarCuentaBancaria } from "./modules/tesoreria/use-cases/RegistrarCuentaBancaria.js";
+import { ListarCuentasBancarias } from "./modules/tesoreria/use-cases/ListarCuentasBancarias.js";
+import { RegistrarTarjeta } from "./modules/tesoreria/use-cases/RegistrarTarjeta.js";
+import { ListarTarjetas } from "./modules/tesoreria/use-cases/ListarTarjetas.js";
+import { RegistrarChequera } from "./modules/tesoreria/use-cases/RegistrarChequera.js";
+import { ListarChequeras } from "./modules/tesoreria/use-cases/ListarChequeras.js";
+import { RegistrarCheque } from "./modules/tesoreria/use-cases/RegistrarCheque.js";
+import { ListarCheques } from "./modules/tesoreria/use-cases/ListarCheques.js";
+import { DepositarCheque } from "./modules/tesoreria/use-cases/DepositarCheque.js";
+import { RechazarCheque } from "./modules/tesoreria/use-cases/RechazarCheque.js";
+import { RegistrarMovimientoFondo } from "./modules/tesoreria/use-cases/RegistrarMovimientoFondo.js";
+import { ListarMovimientosFondo } from "./modules/tesoreria/use-cases/ListarMovimientosFondo.js";
+
 /**
  * Composition root. Un unico container para todo el proceso: cada modulo nuevo
  * (contabilidad, compras, ventas, fiscal, tesoreria, stock, sueldos) agrega
@@ -99,6 +130,43 @@ export function buildContainer(): Container {
   container.bind(ConfirmarComprobanteCompra).toSelf();
   container.bind(ListarComprobantesCompra).toSelf();
   container.bind(RegistrarPagoCompra).toSelf();
+
+  // --- ventas: infra ---
+  container.bind(ClienteRepository).toSelf().inSingletonScope();
+  container.bind(VentaComprobanteRepository).toSelf().inSingletonScope();
+  container.bind(VentaCobroRepository).toSelf().inSingletonScope();
+
+  // --- ventas: use-cases ---
+  container.bind(RegistrarCliente).toSelf();
+  container.bind(ListarClientes).toSelf();
+  container.bind(RegistrarComprobanteVenta).toSelf();
+  container.bind(ConfirmarComprobanteVenta).toSelf();
+  container.bind(ListarComprobantesVenta).toSelf();
+  container.bind(RegistrarCobroVenta).toSelf();
+
+  // --- tesoreria: infra ---
+  container.bind(CajaRepository).toSelf().inSingletonScope();
+  container.bind(CuentaBancariaRepository).toSelf().inSingletonScope();
+  container.bind(TarjetaRepository).toSelf().inSingletonScope();
+  container.bind(ChequeraRepository).toSelf().inSingletonScope();
+  container.bind(ChequeRepository).toSelf().inSingletonScope();
+  container.bind(MovimientoFondoRepository).toSelf().inSingletonScope();
+
+  // --- tesoreria: use-cases ---
+  container.bind(RegistrarCaja).toSelf();
+  container.bind(ListarCajas).toSelf();
+  container.bind(RegistrarCuentaBancaria).toSelf();
+  container.bind(ListarCuentasBancarias).toSelf();
+  container.bind(RegistrarTarjeta).toSelf();
+  container.bind(ListarTarjetas).toSelf();
+  container.bind(RegistrarChequera).toSelf();
+  container.bind(ListarChequeras).toSelf();
+  container.bind(RegistrarCheque).toSelf();
+  container.bind(ListarCheques).toSelf();
+  container.bind(DepositarCheque).toSelf();
+  container.bind(RechazarCheque).toSelf();
+  container.bind(RegistrarMovimientoFondo).toSelf();
+  container.bind(ListarMovimientosFondo).toSelf();
 
   return container;
 }

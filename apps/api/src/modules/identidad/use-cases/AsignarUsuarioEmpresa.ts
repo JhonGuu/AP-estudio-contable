@@ -1,4 +1,4 @@
-import { injectable } from "inversify";
+import { inject, injectable } from "inversify";
 import { AppError } from "../../../shared/http/AppError.js";
 import { EmpresaRepository } from "../infra/EmpresaRepository.js";
 import { UsuarioRepository } from "../infra/UsuarioRepository.js";
@@ -16,9 +16,9 @@ import type { RolEmpresa } from "../domain/roles.js";
 @injectable()
 export class AsignarUsuarioEmpresa {
   constructor(
-    private readonly usuarioRepository: UsuarioRepository,
-    private readonly empresaRepository: EmpresaRepository,
-    private readonly usuarioEmpresaRepository: UsuarioEmpresaRepository,
+    @inject(UsuarioRepository) private readonly usuarioRepository: UsuarioRepository,
+    @inject(EmpresaRepository) private readonly empresaRepository: EmpresaRepository,
+    @inject(UsuarioEmpresaRepository) private readonly usuarioEmpresaRepository: UsuarioEmpresaRepository,
   ) {}
 
   async ejecutar(

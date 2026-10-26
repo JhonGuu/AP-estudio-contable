@@ -1,4 +1,4 @@
-import { injectable } from "inversify";
+import { inject, injectable } from "inversify";
 import { AppError } from "../../../shared/http/AppError.js";
 import { signAccessToken, verifyRefreshToken } from "../../../shared/security/jwt.js";
 import { UsuarioRepository } from "../infra/UsuarioRepository.js";
@@ -10,7 +10,7 @@ export interface RefrescarTokenResult {
 /** POST /auth/refresh — nota 06, seccion 4. */
 @injectable()
 export class RefrescarToken {
-  constructor(private readonly usuarioRepository: UsuarioRepository) {}
+  constructor(@inject(UsuarioRepository) private readonly usuarioRepository: UsuarioRepository) {}
 
   async ejecutar(refreshToken: string): Promise<RefrescarTokenResult> {
     let payload;

@@ -1,4 +1,4 @@
-import { injectable } from "inversify";
+import { inject, injectable } from "inversify";
 import { PuntoVentaRepository } from "../infra/PuntoVentaRepository.js";
 import type { EmpresaContext } from "../../../shared/http/requestContext.js";
 import type { PuntoVenta } from "../domain/PuntoVenta.js";
@@ -11,7 +11,7 @@ export interface CrearPuntoVentaInput {
 /** POST /puntos-venta (nota 08, seccion 5) — ABM de puntos de venta de la empresa activa. */
 @injectable()
 export class CrearPuntoVenta {
-  constructor(private readonly puntoVentaRepository: PuntoVentaRepository) {}
+  constructor(@inject(PuntoVentaRepository) private readonly puntoVentaRepository: PuntoVentaRepository) {}
 
   async ejecutar(context: EmpresaContext, input: CrearPuntoVentaInput): Promise<PuntoVenta> {
     return this.puntoVentaRepository.crear({

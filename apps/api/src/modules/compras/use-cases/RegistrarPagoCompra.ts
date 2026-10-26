@@ -1,4 +1,4 @@
-import { injectable } from "inversify";
+import { inject, injectable } from "inversify";
 import { AppError } from "../../../shared/http/AppError.js";
 import { CompraComprobanteRepository } from "../infra/CompraComprobanteRepository.js";
 import { CompraPagoRepository, type Pago } from "../infra/CompraPagoRepository.js";
@@ -24,12 +24,21 @@ export interface RegistrarPagoCompraInput {
   retenciones?: RetencionInput[];
 }
 
+/**
+ * Cada medio de pago imputa a una cuenta distinta del haber (nota 07 "de
+ * fabrica"): caja/cuenta bancaria bajan un activo, cheque propio sube el
+ * pasivo "cheques emitidos a pagar", cheque de tercero baja el activo
+ * "cheques de terceros en cartera" (se entrega un cheque que se tenia en
+ * cartera), tarjeta sube el pasivo "tarjeta corporativa a pagar" (nota 22 —
+ * antes quedaba sin cuenta mapeada y el asiento se rechazaba desbalanceado).
+ */
 const VARIABLE_POR_MEDIO: Record<PagoMedioInput["medio"], string | null> = {
   CAJA: "CAJA_TOTAL",
   CUENTA_BANCARIA: "CUENTA_TOTAL",
-  CHEQUE_PROPIO: "CHEQUE_TOTAL",
-  TARJETA: null,
-  CHEQUE_TERCERO: null,
+  CHEQUE_PROPIO: "CHEQUE_PROPIO_TOTAL",
+  CHEQUE_TERCERO: "CHEQUE_TERCERO_TOTAL",
+  /** Tarjeta corporativa a pagar (nota 22) — cierra el hueco que dejaba esto en null. */
+  TARJETA: "TARJETA_TOTAL",
 };
 
 /**
@@ -42,11 +51,11 @@ const VARIABLE_POR_MEDIO: Record<PagoMedioInput["medio"], string | null> = {
 @injectable()
 export class RegistrarPagoCompra {
   constructor(
-    private readonly compraPagoRepository: CompraPagoRepository,
-    private readonly compraComprobanteRepository: CompraComprobanteRepository,
-    private readonly proveedorRepository: ProveedorRepository,
-    private readonly empresaRepository: EmpresaRepository,
-    private readonly generarAsientoDesdeComprobante: GenerarAsientoDesdeComprobante,
+    @inject(CompraPagoRepository) private readonly compraPagoRepository: CompraPagoRepository,
+    @inject(CompraComprobanteRepository) private readonly compraComprobanteRepository: CompraComprobanteRepository,
+    @inject(ProveedorRepository) private readonly proveedorRepository: ProveedorRepository,
+    @inject(EmpresaRepository) private readonly empresaRepository: EmpresaRepository,
+    @inject(GenerarAsientoDesdeComprobante) private readonly generarAsientoDesdeComprobante: GenerarAsientoDesdeComprobante,
   ) {}
 
   async ejecutar(context: EmpresaContext, input: RegistrarPagoCompraInput): Promise<Pago> {
@@ -123,7 +132,9 @@ export class RegistrarPagoCompra {
       PAGO_TOTAL: input.importeTotal,
       CAJA_TOTAL: 0,
       CUENTA_TOTAL: 0,
-      CHEQUE_TOTAL: 0,
+      CHEQUE_PROPIO_TOTAL: 0,
+      CHEQUE_TERCERO_TOTAL: 0,
+      TARJETA_TOTAL: 0,
       RETENCIONES_TOTAL: 0,
     };
     for (const medio of input.medios) {

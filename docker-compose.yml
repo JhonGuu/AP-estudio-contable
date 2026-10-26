@@ -1,0 +1,16 @@
+services:
+  db:
+    image: postgres:16
+    container_name: ap-contadores-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ap_contadores
+      POSTGRES_PASSWORD: ap_contadores
+      POSTGRES_DB: ap_contadores_dev
+    ports:
+      - "5433:5432"
+    volumes:
+      - ap_contadores_db_data:/var/lib/postgresql/data
+
+volumes:
+  ap_contadores_db_data:

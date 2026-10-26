@@ -42,6 +42,13 @@ export class PlanCuentaRepository {
     return row ? toDomain(row) : null;
   }
 
+  async buscarPorIdYEmpresa(id: string, empresaId: string): Promise<CuentaContable | null> {
+    const row = await this.db.query.planCuenta.findFirst({
+      where: and(eq(planCuenta.id, id), eq(planCuenta.empresaId, empresaId)),
+    });
+    return row ? toDomain(row) : null;
+  }
+
   async listarPorEmpresa(empresaId: string): Promise<CuentaContable[]> {
     const rows = await this.db.query.planCuenta.findMany({ where: eq(planCuenta.empresaId, empresaId) });
     return rows.map(toDomain);

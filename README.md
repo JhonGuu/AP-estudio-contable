@@ -32,15 +32,19 @@ ap-contadores/
 
 ## Arranque local
 
+Requiere Docker Desktop corriendo (para la base) y Node 20+.
+
 ```bash
+docker compose up -d            # levanta Postgres en localhost:5432 (usuario/clave/base: ap_contadores)
 pnpm install
-cp .env.example apps/api/.env   # completar DATABASE_URL, JWT_SECRET, MASTER_ENCRYPTION_KEY
-pnpm db:generate                # genera migraciones Drizzle
+cp apps/api/.env.example apps/api/.env   # completar JWT_ACCESS_SECRET, JWT_REFRESH_SECRET, MASTER_ENCRYPTION_KEY
 pnpm db:migrate                 # aplica migraciones
-pnpm db:seed                    # carga catálogos base (monedas, provincias, condición IVA, tipo documento)
+pnpm db:seed                    # carga catálogos base (monedas, provincias, condición IVA, tipo de comprobante, modelos de asiento)
 pnpm dev:api                    # http://localhost:3000
 pnpm dev:web                    # http://localhost:5173
 ```
+
+`docker-compose.yml` en la raíz define el contenedor `ap-contadores-db` con un volumen nombrado, asi que los datos persisten entre reinicios (`docker compose down` sin `-v` no los borra). El `.env.example` de la raíz quedó desactualizado — el que hay que copiar es el de `apps/api/`.
 
 ## Orden de construcción
 

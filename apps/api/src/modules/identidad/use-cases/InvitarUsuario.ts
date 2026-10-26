@@ -1,4 +1,4 @@
-import { injectable } from "inversify";
+import { inject, injectable } from "inversify";
 import { randomBytes } from "node:crypto";
 import { AppError } from "../../../shared/http/AppError.js";
 import { hashPassword } from "../../../shared/security/password.js";
@@ -30,7 +30,7 @@ export interface InvitarUsuarioResult {
 /** POST /usuarios — nota 06, seccion 4: "Invita a un usuario nuevo al tenant". */
 @injectable()
 export class InvitarUsuario {
-  constructor(private readonly usuarioRepository: UsuarioRepository) {}
+  constructor(@inject(UsuarioRepository) private readonly usuarioRepository: UsuarioRepository) {}
 
   async ejecutar(auth: AuthContext, input: InvitarUsuarioInput): Promise<InvitarUsuarioResult> {
     if (!ROLES_CON_ALTA_EMPRESA.includes(auth.rolGlobal)) {
