@@ -2,6 +2,7 @@ import { Link, Outlet, useRouterState } from "@tanstack/react-router";
 import { useSession } from "@/lib/session-context";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { NuevaEmpresaDialog } from "@/pages/empresas/NuevaEmpresaDialog";
 
 const NAV_ITEMS = [
   { to: "/", label: "Inicio" },
@@ -86,8 +87,10 @@ function EmpresaPicker() {
 
       {session.empresas.length === 0 ? (
         <p className="text-sm text-slate-500">
-          Todavia no tenes empresas asignadas. Un OWNER/ADMIN del estudio puede darte acceso desde
-          &quot;Usuarios&quot;.
+          Todavia no tenes empresas asignadas.{" "}
+          {session.puedeCrearEmpresa
+            ? "Crea la primera con el boton de abajo."
+            : "Un OWNER/ADMIN del estudio puede darte acceso desde “Usuarios”."}
         </p>
       ) : (
         <ul className="space-y-2">
@@ -105,6 +108,12 @@ function EmpresaPicker() {
             </li>
           ))}
         </ul>
+      )}
+
+      {session.puedeCrearEmpresa && (
+        <div className="mt-4">
+          <NuevaEmpresaDialog triggerLabel={session.empresas.length === 0 ? "Crear mi primera empresa" : "Crear empresa nueva"} />
+        </div>
       )}
 
       <div className="mt-6">

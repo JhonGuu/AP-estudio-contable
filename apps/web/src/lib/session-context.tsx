@@ -10,9 +10,12 @@ interface PerfilEmpresa {
 }
 
 interface PerfilResponse {
-  usuario: { id: string; nombre: string; apellido: string; email: string };
+  usuario: { id: string; nombre: string; apellido: string; email: string; rolGlobal: string };
   empresas: PerfilEmpresa[];
 }
+
+/** nota 06, seccion 4: solo OWNER/ADMIN pueden dar de alta una empresa nueva (ROLES_CON_ALTA_EMPRESA). */
+const ROLES_CON_ALTA_EMPRESA = ["OWNER", "ADMIN"];
 
 interface Empresa {
   id: string;
@@ -31,6 +34,8 @@ interface SessionContextValue {
   empresas: EmpresaConRol[];
   empresaActivaId: string | null;
   empresaActiva: EmpresaConRol | null;
+  /** true si rolGlobal es OWNER/ADMIN — controla si se muestra "Crear empresa nueva". */
+  puedeCrearEmpresa: boolean;
   setEmpresaActiva: (empresaId: string) => void;
   cambiarEmpresa: () => void;
   logout: () => void;
@@ -107,6 +112,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
       empresas,
       empresaActivaId: empresaActiva ? empresaActivaId : null,
       empresaActiva,
+      puedeCrearEmpresa: ROLES_CON_ALTA_EMPRESA.includes(perfilQuery.data.usuario.rolGlobal),
       setEmpresaActiva,
       cambiarEmpresa,
       logout,
