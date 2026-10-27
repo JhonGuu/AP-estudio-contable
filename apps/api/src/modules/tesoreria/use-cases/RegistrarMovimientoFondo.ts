@@ -7,8 +7,9 @@ import { EmpresaRepository } from "../../identidad/infra/EmpresaRepository.js";
 import { EjercicioRepository } from "../../contabilidad/infra/EjercicioRepository.js";
 import { AsientoRepository } from "../../contabilidad/infra/AsientoRepository.js";
 import { PlanCuentaRepository } from "../../contabilidad/infra/PlanCuentaRepository.js";
+import { CODIGO_CUENTA_DIFERENCIAS_CAJA_Y_VALORES } from "../../contabilidad/use-cases/ActivarModelosAsientoDeFabrica.js";
 import { movimientoEsValido, type MovimientoFondo, type NuevoMovimientoFondo } from "../domain/MovimientoFondo.js";
-import type { AsientoMovimientoInput } from "../../contabilidad/domain/Asiento.js";
+import { estaBalanceado, type AsientoMovimientoInput } from "../../contabilidad/domain/Asiento.js";
 import type { EmpresaContext } from "../../../shared/http/requestContext.js";
 
 export type RegistrarMovimientoFondoInput = NuevoMovimientoFondo;
@@ -20,7 +21,10 @@ export type RegistrarMovimientoFondoInput = NuevoMovimientoFondo;
  * formulas para decidir que cuenta debita/acredita: se arma el asiento
  * MANUAL directo, resolviendo la cuenta contable real de cada caja/cuenta
  * bancaria (no una cuenta pool de fabrica, a diferencia de PAGO_ASIENTO/
- * COBRO_ASIENTO/DEPOSITO).
+ * COBRO_ASIENTO/DEPOSITO). Una TRANSFERENCIA ya trae sus dos lados; un
+ * AJUSTE de un solo lado se completa con la cuenta de fabrica "Diferencias
+ * de caja y valores" como contrapartida, para que el asiento resultante
+ * siempre cumpla Σ DEBE == Σ HABER.
  */
 @injectable()
 export class RegistrarMovimientoFondo {
@@ -59,6 +63,37 @@ export class RegistrarMovimientoFondo {
       const cuenta = await this.resolverCuentaContable(context.empresaId, input.cuentaOrigenTipo, input.cuentaOrigenId);
       movimientos.push({ cuentaId: cuenta.id, cuentaCodigo: cuenta.codigo, lado: "HABER", importe: input.importe });
       await this.ajustarSaldo(input.cuentaOrigenTipo, input.cuentaOrigenId, -input.importe);
+    }
+
+    // Un AJUSTE de un solo lado (nota 22, seccion 4: "alcanza con una sola
+    // cuenta") deja el asiento con una unica linea si no se agrega una
+    // contrapartida — rompe Σ DEBE == Σ HABER. La TRANSFERENCIA siempre trae
+    // los dos lados y no entra aca.
+    if (movimientos.length === 1) {
+      const contrapartida = await this.planCuentaRepository.buscarPorCodigo(
+        context.empresaId,
+        CODIGO_CUENTA_DIFERENCIAS_CAJA_Y_VALORES,
+      );
+      if (!contrapartida) {
+        throw new AppError(
+          422,
+          "Falta la cuenta de fabrica 'Diferencias de caja y valores' en el plan de cuentas de esta empresa",
+          "CUENTA_DIFERENCIAS_NO_CONFIGURADA",
+        );
+      }
+      const ladoContrapartida = movimientos[0]!.lado === "DEBE" ? "HABER" : "DEBE";
+      movimientos.push({
+        cuentaId: contrapartida.id,
+        cuentaCodigo: contrapartida.codigo,
+        lado: ladoContrapartida,
+        importe: input.importe,
+      });
+    }
+
+    if (!estaBalanceado(movimientos)) {
+      // No deberia poder pasar dado lo de arriba — chequeo defensivo, mismo
+      // criterio que GenerarAsientoDesdeComprobante antes de persistir.
+      throw new AppError(422, "El asiento del movimiento de fondo no quedo balanceado", "ASIENTO_DESBALANCEADO");
     }
 
     const movimiento = await this.movimientoFondoRepository.crear({

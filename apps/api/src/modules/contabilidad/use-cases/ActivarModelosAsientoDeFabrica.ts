@@ -15,6 +15,16 @@ import type { TipoCuenta } from "../domain/CuentaContable.js";
  * 2.1.01.004 cierra el hueco documentado en RegistrarPagoCompra: pagar a un
  * proveedor con TARJETA (una corporativa, no la que cobra a un cliente) no
  * tenia cuenta de fabrica y el asiento se rechazaba con ASIENTO_DESBALANCEADO.
+ *
+ * 5.9.01.001 cierra un hueco analogo en RegistrarMovimientoFondo: un AJUSTE
+ * de un solo lado (ej. acreditar una caja sin indicar de donde sale la
+ * plata — una diferencia de arqueo) generaba un asiento de una sola linea,
+ * sin contrapartida, violando Σ DEBE == Σ HABER (encontrado via el Libro
+ * Diario, nota 11). Es una unica cuenta de resultado usada en los dos
+ * sentidos (HABER cuando sobra, DEBE cuando falta) — simplificacion v1
+ * razonable porque el tipo "RESULTADO" de AP-Contadores no distingue
+ * ingreso/gasto, y el saldo neto de la cuenta ya refleja sobrantes menos
+ * faltantes del periodo.
  */
 const PLAN_CUENTAS_DE_FABRICA: { codigo: string; nombre: string; tipo: TipoCuenta }[] = [
   { codigo: "1.1.01.001", nombre: "Caja", tipo: "ACTIVO" },
@@ -34,7 +44,11 @@ const PLAN_CUENTAS_DE_FABRICA: { codigo: string; nombre: string; tipo: TipoCuent
   { codigo: "2.1.04.003", nombre: "Otros impuestos a depositar", tipo: "PASIVO" },
   { codigo: "4.2.01.001", nombre: "Ventas", tipo: "RESULTADO" },
   { codigo: "5.2.02.001", nombre: "Compras y gastos", tipo: "RESULTADO" },
+  { codigo: "5.9.01.001", nombre: "Diferencias de caja y valores", tipo: "RESULTADO" },
 ];
+
+/** Codigo de la cuenta de fabrica que RegistrarMovimientoFondo usa como contrapartida de un AJUSTE de un solo lado. */
+export const CODIGO_CUENTA_DIFERENCIAS_CAJA_Y_VALORES = "5.9.01.001";
 
 /**
  * Nota 07, "Flujo de alta": cuando se crea una empresa, se copian las
