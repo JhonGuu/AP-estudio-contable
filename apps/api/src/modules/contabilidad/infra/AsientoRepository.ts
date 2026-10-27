@@ -1,9 +1,10 @@
-import { eq, sql } from "drizzle-orm";
+import { and, asc, eq, gte, lte, sql } from "drizzle-orm";
 import { inject, injectable } from "inversify";
 import type { Database } from "../../../shared/db/client.js";
 import { TYPES } from "../../../types.js";
 import { asiento, asientoContador, asientoMovimiento } from "./schema.js";
 import type { Asiento, AsientoMovimientoInput, ComprobanteOrigen, OrigenAsiento } from "../domain/Asiento.js";
+import type { LadoMovimiento } from "../domain/ModeloAsiento.js";
 
 export interface CrearAsientoInput {
   tenantId: string;
@@ -14,6 +15,42 @@ export interface CrearAsientoInput {
   origen: OrigenAsiento;
   comprobanteOrigen: ComprobanteOrigen | null;
   movimientos: AsientoMovimientoInput[];
+}
+
+/** Filtro de rango de fechas compartido por Libro Diario y Libro Mayor. */
+export interface FiltrosAsiento {
+  desde?: Date;
+  hasta?: Date;
+}
+
+export interface MovimientoAsientoDetalle {
+  cuentaId: string;
+  cuentaCodigo: string;
+  cuentaNombre: string;
+  lado: LadoMovimiento;
+  importe: number;
+}
+
+/** Un asiento con sus movimientos resueltos (cuenta ya incluida) — para Libro Diario. */
+export interface AsientoConMovimientos {
+  id: string;
+  numero: number;
+  fecha: Date;
+  leyenda: string;
+  origen: OrigenAsiento;
+  comprobanteOrigenTipo: string | null;
+  comprobanteOrigenId: string | null;
+  movimientos: MovimientoAsientoDetalle[];
+}
+
+/** Una linea de movimiento de una cuenta especifica, en orden cronologico — para Libro Mayor. */
+export interface MovimientoMayor {
+  asientoId: string;
+  asientoNumero: number;
+  fecha: Date;
+  leyenda: string;
+  lado: LadoMovimiento;
+  importe: number;
 }
 
 @injectable()
@@ -75,5 +112,62 @@ export class AsientoRepository {
         movimientos: movimientosNoCero,
       };
     });
+  }
+
+  /** Libro Diario (nota 11 cnt_asiento/cnt_movimiento): todos los asientos de la empresa, con sus movimientos y la cuenta ya resuelta, en orden cronologico. */
+  async listarPorEmpresa(empresaId: string, filtros: FiltrosAsiento = {}): Promise<AsientoConMovimientos[]> {
+    const condiciones = [eq(asiento.empresaId, empresaId)];
+    if (filtros.desde) condiciones.push(gte(asiento.fecha, filtros.desde));
+    if (filtros.hasta) condiciones.push(lte(asiento.fecha, filtros.hasta));
+
+    const rows = await this.db.query.asiento.findMany({
+      where: and(...condiciones),
+      with: { movimientos: { with: { cuenta: true } } },
+      orderBy: (a, { asc: ascOrder }) => [ascOrder(a.fecha), ascOrder(a.numero)],
+    });
+
+    return rows.map((r) => ({
+      id: r.id,
+      numero: r.numero,
+      fecha: r.fecha,
+      leyenda: r.leyenda,
+      origen: r.origen,
+      comprobanteOrigenTipo: r.comprobanteOrigenTipo,
+      comprobanteOrigenId: r.comprobanteOrigenId,
+      movimientos: r.movimientos.map((m) => ({
+        cuentaId: m.cuentaId,
+        cuentaCodigo: m.cuenta.codigo,
+        cuentaNombre: m.cuenta.nombre,
+        lado: m.lado,
+        importe: Number(m.importe),
+      })),
+    }));
+  }
+
+  /** Libro Mayor de una cuenta (nota 11 cnt_movimiento filtrado por cuenta): movimientos de esa cuenta en orden cronologico, base para calcular saldo acumulado. */
+  async listarMovimientosPorCuenta(
+    empresaId: string,
+    cuentaId: string,
+    filtros: FiltrosAsiento = {},
+  ): Promise<MovimientoMayor[]> {
+    const condiciones = [eq(asiento.empresaId, empresaId), eq(asientoMovimiento.cuentaId, cuentaId)];
+    if (filtros.desde) condiciones.push(gte(asiento.fecha, filtros.desde));
+    if (filtros.hasta) condiciones.push(lte(asiento.fecha, filtros.hasta));
+
+    const rows = await this.db
+      .select({
+        asientoId: asiento.id,
+        asientoNumero: asiento.numero,
+        fecha: asiento.fecha,
+        leyenda: asiento.leyenda,
+        lado: asientoMovimiento.lado,
+        importe: asientoMovimiento.importe,
+      })
+      .from(asientoMovimiento)
+      .innerJoin(asiento, eq(asientoMovimiento.asientoId, asiento.id))
+      .where(and(...condiciones))
+      .orderBy(asc(asiento.fecha), asc(asiento.numero));
+
+    return rows.map((r) => ({ ...r, importe: Number(r.importe) }));
   }
 }

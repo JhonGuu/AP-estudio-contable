@@ -11,6 +11,7 @@ const NAV_ITEMS = [
   { to: "/comprobantes-compra", label: "Comprobantes de compra" },
   { to: "/comprobantes-venta", label: "Comprobantes de venta" },
   { to: "/tesoreria", label: "Tesoreria" },
+  { to: "/reportes", label: "Reportes" },
 ];
 
 /**

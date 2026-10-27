@@ -27,6 +27,8 @@ import { AsientoRepository } from "./modules/contabilidad/infra/AsientoRepositor
 import { ActivarModelosAsientoDeFabrica } from "./modules/contabilidad/use-cases/ActivarModelosAsientoDeFabrica.js";
 import { GenerarAsientoDesdeComprobante } from "./modules/contabilidad/use-cases/GenerarAsientoDesdeComprobante.js";
 import { ListarPlanCuentas } from "./modules/contabilidad/use-cases/ListarPlanCuentas.js";
+import { ListarAsientos } from "./modules/contabilidad/use-cases/ListarAsientos.js";
+import { ObtenerLibroMayor } from "./modules/contabilidad/use-cases/ObtenerLibroMayor.js";
 
 import { TipoComprobanteRepository } from "./modules/comprobantes/infra/TipoComprobanteRepository.js";
 import { PuntoVentaRepository } from "./modules/comprobantes/infra/PuntoVentaRepository.js";
@@ -116,6 +118,8 @@ export function buildContainer(): Container {
   container.bind(ActivarModelosAsientoDeFabrica).toSelf();
   container.bind(GenerarAsientoDesdeComprobante).toSelf();
   container.bind(ListarPlanCuentas).toSelf();
+  container.bind(ListarAsientos).toSelf();
+  container.bind(ObtenerLibroMayor).toSelf();
 
   // --- comprobantes: infra ---
   container.bind(TipoComprobanteRepository).toSelf().inSingletonScope();
