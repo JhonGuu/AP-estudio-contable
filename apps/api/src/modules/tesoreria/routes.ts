@@ -20,6 +20,12 @@ import { DepositarCheque } from "./use-cases/DepositarCheque.js";
 import { RechazarCheque } from "./use-cases/RechazarCheque.js";
 import { RegistrarMovimientoFondo } from "./use-cases/RegistrarMovimientoFondo.js";
 import { ListarMovimientosFondo } from "./use-cases/ListarMovimientosFondo.js";
+import { AbrirCajaDiaria } from "./use-cases/AbrirCajaDiaria.js";
+import { CerrarCajaDiaria } from "./use-cases/CerrarCajaDiaria.js";
+import { ListarCajasDiarias } from "./use-cases/ListarCajasDiarias.js";
+import { ImportarExtractoBancario } from "./use-cases/ImportarExtractoBancario.js";
+import { ListarConciliacion } from "./use-cases/ListarConciliacion.js";
+import { ConciliarLineaManual } from "./use-cases/ConciliarLineaManual.js";
 import { ORIGENES_CHEQUE, TIPOS_TERCERO_CHEQUE } from "./domain/Cheque.js";
 import { TIPOS_CUENTA_FONDO, TIPOS_MOVIMIENTO_FONDO } from "./domain/MovimientoFondo.js";
 
@@ -63,6 +69,30 @@ const registrarChequeSchema = z.object({
 const depositarChequeSchema = z.object({
   cuentaBancariaId: z.string().uuid(),
   fecha: z.coerce.date(),
+});
+
+const abrirCajaDiariaSchema = z.object({
+  cajaId: z.string().uuid(),
+  fecha: z.coerce.date(),
+});
+
+const cerrarCajaDiariaSchema = z.object({
+  fecha: z.coerce.date(),
+  totalContado: z.number().min(0),
+});
+
+const lineaExtractoSchema = z.object({
+  fecha: z.coerce.date(),
+  descripcion: z.string().min(1).max(300),
+  importe: z.number(),
+});
+
+const importarExtractoBancarioSchema = z.object({
+  lineas: z.array(lineaExtractoSchema).min(1),
+});
+
+const conciliarLineaManualSchema = z.object({
+  asientoId: z.string().uuid(),
 });
 
 const registrarMovimientoFondoSchema = z.object({
@@ -253,6 +283,83 @@ export function buildTesoreriaRouter(container: Container): Router {
       if (!req.context) throw AppError.unauthorized();
       const movimientos = await container.get(ListarMovimientosFondo).ejecutar(req.context.empresaId);
       res.status(200).json(movimientos);
+    }),
+  );
+
+  router.post(
+    "/caja-diaria/abrir",
+    authMiddleware,
+    empresaContextMiddleware,
+    asyncHandler(async (req, res) => {
+      if (!req.context) throw AppError.unauthorized();
+      const input = abrirCajaDiariaSchema.parse(req.body);
+      const turno = await container.get(AbrirCajaDiaria).ejecutar(req.context, input);
+      res.status(201).json(turno);
+    }),
+  );
+
+  router.post(
+    "/caja-diaria/:id/cerrar",
+    authMiddleware,
+    empresaContextMiddleware,
+    asyncHandler(async (req, res) => {
+      if (!req.context) throw AppError.unauthorized();
+      const cajaDiariaId = z.string().uuid().parse(req.params.id);
+      const input = cerrarCajaDiariaSchema.parse(req.body);
+      const turno = await container.get(CerrarCajaDiaria).ejecutar(req.context, { cajaDiariaId, ...input });
+      res.status(200).json(turno);
+    }),
+  );
+
+  router.get(
+    "/caja-diaria",
+    authMiddleware,
+    empresaContextMiddleware,
+    asyncHandler(async (req, res) => {
+      if (!req.context) throw AppError.unauthorized();
+      const cajaId = req.query.cajaId ? z.string().uuid().parse(req.query.cajaId) : undefined;
+      const turnos = await container.get(ListarCajasDiarias).ejecutar(req.context.empresaId, cajaId);
+      res.status(200).json(turnos);
+    }),
+  );
+
+  router.post(
+    "/cuentas-bancarias/:id/conciliacion",
+    authMiddleware,
+    empresaContextMiddleware,
+    asyncHandler(async (req, res) => {
+      if (!req.context) throw AppError.unauthorized();
+      const cuentaBancariaId = z.string().uuid().parse(req.params.id);
+      const input = importarExtractoBancarioSchema.parse(req.body);
+      const lineas = await container
+        .get(ImportarExtractoBancario)
+        .ejecutar(req.context, { cuentaBancariaId, lineas: input.lineas });
+      res.status(201).json(lineas);
+    }),
+  );
+
+  router.get(
+    "/cuentas-bancarias/:id/conciliacion",
+    authMiddleware,
+    empresaContextMiddleware,
+    asyncHandler(async (req, res) => {
+      if (!req.context) throw AppError.unauthorized();
+      const cuentaBancariaId = z.string().uuid().parse(req.params.id);
+      const resultado = await container.get(ListarConciliacion).ejecutar(req.context.empresaId, cuentaBancariaId);
+      res.status(200).json(resultado);
+    }),
+  );
+
+  router.post(
+    "/conciliacion/:id/conciliar",
+    authMiddleware,
+    empresaContextMiddleware,
+    asyncHandler(async (req, res) => {
+      if (!req.context) throw AppError.unauthorized();
+      const lineaId = z.string().uuid().parse(req.params.id);
+      const input = conciliarLineaManualSchema.parse(req.body);
+      const linea = await container.get(ConciliarLineaManual).ejecutar(req.context, lineaId, input.asientoId);
+      res.status(200).json(linea);
     }),
   );
 

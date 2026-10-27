@@ -268,3 +268,147 @@ export function useCrearMovimientoFondo() {
     },
   });
 }
+
+/** Tesoreria v2 (nota 22, seccion 2 y 6): caja diaria (turnos con arqueo) y conciliacion bancaria. */
+export type EstadoCajaDiaria = "ABIERTA" | "CERRADA";
+
+export interface CajaDiaria {
+  id: string;
+  cajaId: string;
+  fechaApertura: string;
+  saldoApertura: number;
+  estado: EstadoCajaDiaria;
+  fechaCierre: string | null;
+  saldoTeorico: number | null;
+  totalContado: number | null;
+  diferencia: number | null;
+  movimientoFondoId: string | null;
+}
+
+export interface AbrirCajaDiariaInput {
+  cajaId: string;
+  fecha: string;
+}
+
+export interface CerrarCajaDiariaInput {
+  fecha: string;
+  totalContado: number;
+}
+
+/** GET /tesoreria/caja-diaria?cajaId= */
+export function useCajasDiarias(cajaId?: string) {
+  return useQuery({
+    queryKey: ["caja-diaria", cajaId ?? "todas"],
+    queryFn: () =>
+      apiFetch<CajaDiaria[]>(`/tesoreria/caja-diaria${cajaId ? `?cajaId=${cajaId}` : ""}`, {
+        conEmpresaActiva: true,
+      }),
+  });
+}
+
+function invalidarTesoreriaTrasAjuste(queryClient: ReturnType<typeof useQueryClient>) {
+  void queryClient.invalidateQueries({ queryKey: ["caja-diaria"] });
+  void queryClient.invalidateQueries({ queryKey: ["cajas"] });
+  void queryClient.invalidateQueries({ queryKey: ["movimientos-fondo"] });
+}
+
+export function useAbrirCajaDiaria() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (input: AbrirCajaDiariaInput) =>
+      apiFetch<CajaDiaria>("/tesoreria/caja-diaria/abrir", { method: "POST", body: input, conEmpresaActiva: true }),
+    onSuccess: () => invalidarTesoreriaTrasAjuste(queryClient),
+  });
+}
+
+export function useCerrarCajaDiaria() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, input }: { id: string; input: CerrarCajaDiariaInput }) =>
+      apiFetch<CajaDiaria>(`/tesoreria/caja-diaria/${id}/cerrar`, {
+        method: "POST",
+        body: input,
+        conEmpresaActiva: true,
+      }),
+    onSuccess: () => invalidarTesoreriaTrasAjuste(queryClient),
+  });
+}
+
+export type EstadoConciliacion = "PENDIENTE" | "CONCILIADA";
+
+export interface LineaExtractoInput {
+  fecha: string;
+  descripcion: string;
+  importe: number;
+}
+
+export interface ConciliacionBancaria extends LineaExtractoInput {
+  id: string;
+  cuentaBancariaId: string;
+  estado: EstadoConciliacion;
+  asientoId: string | null;
+}
+
+export interface MovimientoDisponible {
+  asientoId: string;
+  asientoNumero: number;
+  fecha: string;
+  leyenda: string;
+  lado: "DEBE" | "HABER";
+  importe: number;
+}
+
+export interface ConciliacionDeCuenta {
+  lineas: ConciliacionBancaria[];
+  movimientosDisponibles: MovimientoDisponible[];
+}
+
+/** GET/POST /tesoreria/cuentas-bancarias/:id/conciliacion */
+export function useConciliacion(cuentaBancariaId: string | null) {
+  return useQuery({
+    queryKey: ["conciliacion", cuentaBancariaId],
+    queryFn: () =>
+      apiFetch<ConciliacionDeCuenta>(`/tesoreria/cuentas-bancarias/${cuentaBancariaId}/conciliacion`, {
+        conEmpresaActiva: true,
+      }),
+    enabled: !!cuentaBancariaId,
+  });
+}
+
+export function useImportarExtracto() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ cuentaBancariaId, lineas }: { cuentaBancariaId: string; lineas: LineaExtractoInput[] }) =>
+      apiFetch<ConciliacionBancaria[]>(`/tesoreria/cuentas-bancarias/${cuentaBancariaId}/conciliacion`, {
+        method: "POST",
+        body: { lineas },
+        conEmpresaActiva: true,
+      }),
+    onSuccess: (_data, variables) => {
+      void queryClient.invalidateQueries({ queryKey: ["conciliacion", variables.cuentaBancariaId] });
+    },
+  });
+}
+
+export function useConciliarLineaManual() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({
+      lineaId,
+      asientoId,
+      cuentaBancariaId,
+    }: {
+      lineaId: string;
+      asientoId: string;
+      cuentaBancariaId: string;
+    }) =>
+      apiFetch<ConciliacionBancaria>(`/tesoreria/conciliacion/${lineaId}/conciliar`, {
+        method: "POST",
+        body: { asientoId },
+        conEmpresaActiva: true,
+      }),
+    onSuccess: (_data, variables) => {
+      void queryClient.invalidateQueries({ queryKey: ["conciliacion", variables.cuentaBancariaId] });
+    },
+  });
+}

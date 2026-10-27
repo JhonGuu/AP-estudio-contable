@@ -13,7 +13,7 @@ import {
 } from "drizzle-orm/pg-core";
 import { empresa, tenant } from "../../identidad/infra/schema.js";
 import { moneda } from "../../catalogos/infra/schema.js";
-import { planCuenta } from "../../contabilidad/infra/schema.js";
+import { planCuenta, asiento } from "../../contabilidad/infra/schema.js";
 
 export const origenChequeEnum = pgEnum("origen_cheque", ["EMITIDO", "RECIBIDO"]);
 export const estadoChequeEnum = pgEnum("estado_cheque", [
@@ -29,6 +29,8 @@ export const estadoChequeEnum = pgEnum("estado_cheque", [
 export const tipoTerceroChequeEnum = pgEnum("tipo_tercero_cheque", ["PROVEEDOR", "CLIENTE"]);
 export const tipoMovimientoFondoEnum = pgEnum("tipo_movimiento_fondo", ["TRANSFERENCIA", "AJUSTE"]);
 export const tipoCuentaFondoEnum = pgEnum("tipo_cuenta_fondo", ["CAJA", "CUENTA_BANCARIA"]);
+export const estadoCajaDiariaEnum = pgEnum("estado_caja_diaria", ["ABIERTA", "CERRADA"]);
+export const estadoConciliacionEnum = pgEnum("estado_conciliacion", ["PENDIENTE", "CONCILIADA"]);
 
 /** Nota 22, seccion 2 — fnd_caja. cuentaContableId liga la caja a su cuenta del plan (asiento MANUAL determinista). */
 export const caja = pgTable(
@@ -173,6 +175,80 @@ export const movimientoFondo = pgTable(
     descripcion: varchar("descripcion", { length: 200 }).notNull(),
   },
   (table) => [index("movimiento_fondo_empresa_id_idx").on(table.empresaId)],
+);
+
+/**
+ * Nota 22, seccion 2 — fnd_caja_diaria. Turno de una caja: apertura con el
+ * saldo que tenia en ese momento, cierre con el saldo teorico (el que la
+ * caja tiene en ese momento, segun todos los movimientos ya aplicados) vs.
+ * el arqueo (conteo fisico). Si difieren, CerrarCajaDiaria genera un AJUSTE
+ * via RegistrarMovimientoFondo (misma cuenta "Diferencias de caja y
+ * valores" del fix de 2026-10-27) y guarda esa referencia en
+ * `movimientoFondoId` — no hay doble contabilizacion, el arqueo reutiliza el
+ * circuito de ajuste que ya existe.
+ */
+export const cajaDiaria = pgTable(
+  "caja_diaria",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    tenantId: uuid("tenant_id")
+      .notNull()
+      .references(() => tenant.id, { onDelete: "restrict" }),
+    empresaId: uuid("empresa_id")
+      .notNull()
+      .references(() => empresa.id, { onDelete: "restrict" }),
+    cajaId: uuid("caja_id")
+      .notNull()
+      .references(() => caja.id, { onDelete: "restrict" }),
+    fechaApertura: timestamp("fecha_apertura", { withTimezone: true }).notNull(),
+    saldoApertura: numeric("saldo_apertura", { precision: 15, scale: 2 }).notNull(),
+    estado: estadoCajaDiariaEnum("estado").notNull().default("ABIERTA"),
+    fechaCierre: timestamp("fecha_cierre", { withTimezone: true }),
+    saldoTeorico: numeric("saldo_teorico", { precision: 15, scale: 2 }),
+    totalContado: numeric("total_contado", { precision: 15, scale: 2 }),
+    diferencia: numeric("diferencia", { precision: 15, scale: 2 }),
+    movimientoFondoId: uuid("movimiento_fondo_id").references(() => movimientoFondo.id, { onDelete: "restrict" }),
+  },
+  (table) => [
+    index("caja_diaria_empresa_id_idx").on(table.empresaId),
+    index("caja_diaria_caja_id_idx").on(table.cajaId),
+  ],
+);
+
+/**
+ * Nota 22, seccion 5 — conciliacion_bancaria. No existia en Nacional Sistema
+ * (se conciliaba a mano contra el resumen bancario) — es una mejora, no una
+ * migracion de dato. Cada linea es una fila del extracto importado;
+ * `importe` sigue la convencion del homebanking (positivo = credito/ingreso
+ * al banco, negativo = debito/egreso). El matching no se hace contra
+ * `movimiento_fondo` (dejaria afuera los pagos/cobros de compras/ventas, que
+ * no pasan por ese modulo) sino contra el Libro Mayor de la cuenta contable
+ * de la cuenta bancaria — ahi esta today el 100% de lo que la tocó, sin
+ * acoplar tesoreria a compras/ventas.
+ */
+export const conciliacionBancaria = pgTable(
+  "conciliacion_bancaria",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    tenantId: uuid("tenant_id")
+      .notNull()
+      .references(() => tenant.id, { onDelete: "restrict" }),
+    empresaId: uuid("empresa_id")
+      .notNull()
+      .references(() => empresa.id, { onDelete: "restrict" }),
+    cuentaBancariaId: uuid("cuenta_bancaria_id")
+      .notNull()
+      .references(() => cuentaBancaria.id, { onDelete: "restrict" }),
+    fecha: timestamp("fecha", { withTimezone: true }).notNull(),
+    descripcion: varchar("descripcion", { length: 300 }).notNull(),
+    importe: numeric("importe", { precision: 15, scale: 2 }).notNull(),
+    estado: estadoConciliacionEnum("estado").notNull().default("PENDIENTE"),
+    asientoId: uuid("asiento_id").references(() => asiento.id, { onDelete: "set null" }),
+  },
+  (table) => [
+    index("conciliacion_bancaria_empresa_id_idx").on(table.empresaId),
+    index("conciliacion_bancaria_cuenta_bancaria_id_idx").on(table.cuentaBancariaId),
+  ],
 );
 
 // --- relations ---

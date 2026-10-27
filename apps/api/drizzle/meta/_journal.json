@@ -22,6 +22,13 @@
       "when": 1789619973513,
       "tag": "0002_smooth_runaways",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1793143041289,
+      "tag": "0003_heavy_colleen_wing",
+      "breakpoints": true
     }
   ]
 }

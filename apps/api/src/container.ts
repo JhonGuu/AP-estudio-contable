@@ -63,6 +63,8 @@ import { TarjetaRepository } from "./modules/tesoreria/infra/TarjetaRepository.j
 import { ChequeraRepository } from "./modules/tesoreria/infra/ChequeraRepository.js";
 import { ChequeRepository } from "./modules/tesoreria/infra/ChequeRepository.js";
 import { MovimientoFondoRepository } from "./modules/tesoreria/infra/MovimientoFondoRepository.js";
+import { CajaDiariaRepository } from "./modules/tesoreria/infra/CajaDiariaRepository.js";
+import { ConciliacionBancariaRepository } from "./modules/tesoreria/infra/ConciliacionBancariaRepository.js";
 import { RegistrarCaja } from "./modules/tesoreria/use-cases/RegistrarCaja.js";
 import { ListarCajas } from "./modules/tesoreria/use-cases/ListarCajas.js";
 import { RegistrarCuentaBancaria } from "./modules/tesoreria/use-cases/RegistrarCuentaBancaria.js";
@@ -77,6 +79,12 @@ import { DepositarCheque } from "./modules/tesoreria/use-cases/DepositarCheque.j
 import { RechazarCheque } from "./modules/tesoreria/use-cases/RechazarCheque.js";
 import { RegistrarMovimientoFondo } from "./modules/tesoreria/use-cases/RegistrarMovimientoFondo.js";
 import { ListarMovimientosFondo } from "./modules/tesoreria/use-cases/ListarMovimientosFondo.js";
+import { AbrirCajaDiaria } from "./modules/tesoreria/use-cases/AbrirCajaDiaria.js";
+import { CerrarCajaDiaria } from "./modules/tesoreria/use-cases/CerrarCajaDiaria.js";
+import { ListarCajasDiarias } from "./modules/tesoreria/use-cases/ListarCajasDiarias.js";
+import { ImportarExtractoBancario } from "./modules/tesoreria/use-cases/ImportarExtractoBancario.js";
+import { ListarConciliacion } from "./modules/tesoreria/use-cases/ListarConciliacion.js";
+import { ConciliarLineaManual } from "./modules/tesoreria/use-cases/ConciliarLineaManual.js";
 
 /**
  * Composition root. Un unico container para todo el proceso: cada modulo nuevo
@@ -164,6 +172,8 @@ export function buildContainer(): Container {
   container.bind(ChequeraRepository).toSelf().inSingletonScope();
   container.bind(ChequeRepository).toSelf().inSingletonScope();
   container.bind(MovimientoFondoRepository).toSelf().inSingletonScope();
+  container.bind(CajaDiariaRepository).toSelf().inSingletonScope();
+  container.bind(ConciliacionBancariaRepository).toSelf().inSingletonScope();
 
   // --- tesoreria: use-cases ---
   container.bind(RegistrarCaja).toSelf();
@@ -180,6 +190,12 @@ export function buildContainer(): Container {
   container.bind(RechazarCheque).toSelf();
   container.bind(RegistrarMovimientoFondo).toSelf();
   container.bind(ListarMovimientosFondo).toSelf();
+  container.bind(AbrirCajaDiaria).toSelf();
+  container.bind(CerrarCajaDiaria).toSelf();
+  container.bind(ListarCajasDiarias).toSelf();
+  container.bind(ImportarExtractoBancario).toSelf();
+  container.bind(ListarConciliacion).toSelf();
+  container.bind(ConciliarLineaManual).toSelf();
 
   return container;
 }

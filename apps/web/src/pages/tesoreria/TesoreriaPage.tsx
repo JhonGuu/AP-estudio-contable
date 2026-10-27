@@ -3,6 +3,7 @@ import { toast } from "sonner";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Select } from "@/components/ui/select";
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@/components/ui/table";
 import { useCatalogos } from "@/lib/catalogos";
 import { useProveedores } from "@/lib/proveedores";
@@ -17,9 +18,13 @@ import {
   useCheques,
   useRechazarCheque,
   useMovimientosFondo,
+  useCajasDiarias,
+  useConciliacion,
+  useConciliarLineaManual,
   type Cheque,
   type EstadoCheque,
   type TipoCuentaFondo,
+  type CajaDiaria,
 } from "@/lib/tesoreria";
 import { NuevaCajaDialog } from "./NuevaCajaDialog";
 import { NuevaCuentaBancariaDialog } from "./NuevaCuentaBancariaDialog";
@@ -28,6 +33,9 @@ import { NuevaChequeraDialog } from "./NuevaChequeraDialog";
 import { NuevoChequeDialog } from "./NuevoChequeDialog";
 import { DepositarChequeDialog } from "./DepositarChequeDialog";
 import { NuevoMovimientoFondoDialog } from "./NuevoMovimientoFondoDialog";
+import { AbrirCajaDiariaDialog } from "./AbrirCajaDiariaDialog";
+import { CerrarCajaDiariaDialog } from "./CerrarCajaDiariaDialog";
+import { ImportarExtractoDialog } from "./ImportarExtractoDialog";
 
 const ESTADO_CHEQUE_VARIANT: Record<EstadoCheque, "default" | "success" | "warning" | "destructive"> = {
   EMITIDO: "warning",
@@ -54,7 +62,13 @@ export function TesoreriaPage() {
   const movimientosQuery = useMovimientosFondo();
   const proveedoresQuery = useProveedores();
   const clientesQuery = useClientes();
+  const cajasDiariasQuery = useCajasDiarias();
   const [chequeADepositar, setChequeADepositar] = useState<Cheque | null>(null);
+  const [turnoACerrar, setTurnoACerrar] = useState<CajaDiaria | null>(null);
+  const [cuentaConciliacionId, setCuentaConciliacionId] = useState<string>("");
+  const conciliacionQuery = useConciliacion(cuentaConciliacionId || null);
+  const conciliarManual = useConciliarLineaManual();
+  const [matchElegido, setMatchElegido] = useState<Record<string, string>>({});
 
   const simboloMoneda = (monedaId: string) => catalogosQuery.data?.monedas.find((m) => m.id === monedaId)?.simbolo ?? "$";
   const nombreCuentaBancaria = (id: string) => cuentasBancariasQuery.data?.find((c) => c.id === id)?.nombre ?? "-";
@@ -68,6 +82,24 @@ export function TesoreriaPage() {
     if (!tipo || !id) return "-";
     if (tipo === "CAJA") return `Caja — ${cajasQuery.data?.find((c) => c.id === id)?.nombre ?? "-"}`;
     return `Cuenta bancaria — ${cuentasBancariasQuery.data?.find((c) => c.id === id)?.nombre ?? "-"}`;
+  };
+
+  const nombreCaja = (id: string) => cajasQuery.data?.find((c) => c.id === id)?.nombre ?? "-";
+  const cajasConTurnoAbierto = new Set(
+    cajasDiariasQuery.data?.filter((t) => t.estado === "ABIERTA").map((t) => t.cajaId) ?? [],
+  );
+  const cajasSinTurnoAbierto = cajasQuery.data?.filter((c) => !cajasConTurnoAbierto.has(c.id)) ?? [];
+
+  const onConciliarManual = (lineaId: string) => {
+    const asientoId = matchElegido[lineaId];
+    if (!asientoId || !cuentaConciliacionId) return;
+    conciliarManual.mutate(
+      { lineaId, asientoId, cuentaBancariaId: cuentaConciliacionId },
+      {
+        onSuccess: () => toast.success("Linea conciliada"),
+        onError: (error) => toast.error(error instanceof ApiError ? error.message : "No se pudo conciliar"),
+      },
+    );
   };
 
   const onRechazar = (id: string) => {
@@ -309,10 +341,174 @@ export function TesoreriaPage() {
         </CardContent>
       </Card>
 
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between space-y-0">
+          <div>
+            <CardTitle>Caja diaria</CardTitle>
+            <CardDescription>Turnos de caja con apertura, cierre y arqueo.</CardDescription>
+          </div>
+          <AbrirCajaDiariaDialog cajasDisponibles={cajasSinTurnoAbierto} />
+        </CardHeader>
+        <CardContent>
+          {!cajasQuery.data?.length ? (
+            <p className="text-sm text-amber-700">Primero necesitas al menos una caja.</p>
+          ) : cajasDiariasQuery.isLoading ? (
+            <p className="text-sm text-slate-500">Cargando...</p>
+          ) : cajasDiariasQuery.data?.length === 0 ? (
+            <p className="text-sm text-slate-500">Todavia no hay turnos abiertos ni cerrados.</p>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Caja</TableHead>
+                  <TableHead>Apertura</TableHead>
+                  <TableHead>Cierre</TableHead>
+                  <TableHead>Saldo teorico</TableHead>
+                  <TableHead>Contado</TableHead>
+                  <TableHead>Diferencia</TableHead>
+                  <TableHead>Estado</TableHead>
+                  <TableHead></TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {cajasDiariasQuery.data?.map((t) => (
+                  <TableRow key={t.id}>
+                    <TableCell className="font-medium">{nombreCaja(t.cajaId)}</TableCell>
+                    <TableCell>{formatFechaISO(t.fechaApertura)}</TableCell>
+                    <TableCell>{t.fechaCierre ? formatFechaISO(t.fechaCierre) : "-"}</TableCell>
+                    <TableCell>{t.saldoTeorico !== null ? `$ ${t.saldoTeorico.toFixed(2)}` : "-"}</TableCell>
+                    <TableCell>{t.totalContado !== null ? `$ ${t.totalContado.toFixed(2)}` : "-"}</TableCell>
+                    <TableCell>
+                      {t.diferencia !== null ? (
+                        <span className={t.diferencia === 0 ? "text-slate-500" : "text-amber-700"}>
+                          $ {t.diferencia.toFixed(2)}
+                        </span>
+                      ) : (
+                        "-"
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant={t.estado === "ABIERTA" ? "warning" : "success"}>
+                        {t.estado === "ABIERTA" ? "Abierto" : "Cerrado"}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
+                      {t.estado === "ABIERTA" && (
+                        <Button size="sm" variant="outline" onClick={() => setTurnoACerrar(t)}>
+                          Cerrar
+                        </Button>
+                      )}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between space-y-0">
+          <div>
+            <CardTitle>Conciliacion bancaria</CardTitle>
+            <CardDescription>Importa el extracto y matchealo contra el Libro Mayor de la cuenta.</CardDescription>
+          </div>
+          {cuentaConciliacionId && <ImportarExtractoDialog cuentaBancariaId={cuentaConciliacionId} />}
+        </CardHeader>
+        <CardContent className="space-y-3">
+          {!cuentasBancariasQuery.data?.length ? (
+            <p className="text-sm text-amber-700">Primero necesitas al menos una cuenta bancaria.</p>
+          ) : (
+            <>
+              <div className="w-72 space-y-1.5">
+                <Select value={cuentaConciliacionId} onChange={(e) => setCuentaConciliacionId(e.target.value)}>
+                  <option value="">Elegi una cuenta bancaria</option>
+                  {cuentasBancariasQuery.data?.map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.nombre} ({c.banco})
+                    </option>
+                  ))}
+                </Select>
+              </div>
+
+              {cuentaConciliacionId && conciliacionQuery.isLoading && (
+                <p className="text-sm text-slate-500">Cargando...</p>
+              )}
+              {cuentaConciliacionId && conciliacionQuery.data?.lineas.length === 0 && (
+                <p className="text-sm text-slate-500">Todavia no importaste ningun extracto para esta cuenta.</p>
+              )}
+              {cuentaConciliacionId && !!conciliacionQuery.data?.lineas.length && (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Fecha</TableHead>
+                      <TableHead>Descripcion</TableHead>
+                      <TableHead>Importe</TableHead>
+                      <TableHead>Estado</TableHead>
+                      <TableHead>Match manual</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {conciliacionQuery.data?.lineas.map((l) => (
+                      <TableRow key={l.id}>
+                        <TableCell>{formatFechaISO(l.fecha)}</TableCell>
+                        <TableCell>{l.descripcion}</TableCell>
+                        <TableCell className={l.importe < 0 ? "text-red-600" : "text-emerald-700"}>
+                          $ {l.importe.toFixed(2)}
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant={l.estado === "CONCILIADA" ? "success" : "warning"}>
+                            {l.estado === "CONCILIADA" ? "Conciliada" : "Pendiente"}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          {l.estado === "PENDIENTE" && (
+                            <div className="flex items-center gap-2">
+                              <Select
+                                className="w-56"
+                                value={matchElegido[l.id] ?? ""}
+                                onChange={(e) => setMatchElegido((prev) => ({ ...prev, [l.id]: e.target.value }))}
+                              >
+                                <option value="">Elegi un movimiento</option>
+                                {conciliacionQuery.data?.movimientosDisponibles.map((m) => (
+                                  <option key={m.asientoId} value={m.asientoId}>
+                                    N° {m.asientoNumero} — {m.leyenda} (${m.importe.toFixed(2)})
+                                  </option>
+                                ))}
+                              </Select>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                disabled={!matchElegido[l.id] || conciliarManual.isPending}
+                                onClick={() => onConciliarManual(l.id)}
+                              >
+                                Conciliar
+                              </Button>
+                            </div>
+                          )}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              )}
+            </>
+          )}
+        </CardContent>
+      </Card>
+
       <DepositarChequeDialog
         cheque={chequeADepositar}
         onOpenChange={(open) => {
           if (!open) setChequeADepositar(null);
+        }}
+      />
+
+      <CerrarCajaDiariaDialog
+        turno={turnoACerrar}
+        nombreCaja={turnoACerrar ? nombreCaja(turnoACerrar.cajaId) : ""}
+        onOpenChange={(open) => {
+          if (!open) setTurnoACerrar(null);
         }}
       />
     </div>
