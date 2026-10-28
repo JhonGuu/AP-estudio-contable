@@ -15,8 +15,13 @@ import { MarcarEstadoVencimiento } from "./use-cases/MarcarEstadoVencimiento.js"
 import { EliminarVencimiento } from "./use-cases/EliminarVencimiento.js";
 import { ObtenerPanelMonotributo } from "./use-cases/ObtenerPanelMonotributo.js";
 import { ActualizarCategoriaMonotributo } from "./use-cases/ActualizarCategoriaMonotributo.js";
+import { CrearLibroSocietario } from "./use-cases/CrearLibroSocietario.js";
+import { ListarLibrosSocietarios } from "./use-cases/ListarLibrosSocietarios.js";
+import { EditarLibroSocietario } from "./use-cases/EditarLibroSocietario.js";
+import { EliminarLibroSocietario } from "./use-cases/EliminarLibroSocietario.js";
 import { ESTADOS_TAREA } from "./domain/TareaEstudio.js";
 import { ESTADOS_VENCIMIENTO, TIPOS_VENCIMIENTO } from "./domain/VencimientoFiscal.js";
+import { ESTADOS_LIBRO_SOCIETARIO, TIPOS_LIBRO_SOCIETARIO } from "./domain/LibroSocietario.js";
 
 const crearTareaSchema = z.object({
   empresaId: z.string().uuid().nullable().optional(),
@@ -53,6 +58,24 @@ const marcarEstadoVencimientoSchema = z.object({
 
 const actualizarCategoriaMonotributoSchema = z.object({
   categoriaMonotributoId: z.string().uuid().nullable(),
+});
+
+const crearLibroSocietarioSchema = z.object({
+  empresaId: z.string().uuid(),
+  tipo: z.enum(TIPOS_LIBRO_SOCIETARIO),
+  numero: z.coerce.number().int().positive(),
+  cantidadFolios: z.coerce.number().int().positive().nullable().optional(),
+  fechaRubrica: z.coerce.date().nullable().optional(),
+  ubicacion: z.string().max(200).nullable().optional(),
+  observaciones: z.string().max(2000).nullable().optional(),
+});
+
+const editarLibroSocietarioSchema = z.object({
+  estado: z.enum(ESTADOS_LIBRO_SOCIETARIO).optional(),
+  ultimoFolioUtilizado: z.coerce.number().int().positive().nullable().optional(),
+  fechaRubrica: z.coerce.date().nullable().optional(),
+  ubicacion: z.string().max(200).nullable().optional(),
+  observaciones: z.string().max(2000).nullable().optional(),
 });
 
 /**
@@ -203,6 +226,57 @@ export function buildEstudioRouter(container: Container): Router {
         .get(ActualizarCategoriaMonotributo)
         .ejecutar(req.auth, empresaId, categoriaMonotributoId);
       res.status(200).json(empresa);
+    }),
+  );
+
+  // --- libros societarios (ver domain/LibroSocietario.ts) ---
+
+  router.post(
+    "/libros-societarios",
+    authMiddleware,
+    asyncHandler(async (req, res) => {
+      if (!req.auth) throw AppError.unauthorized();
+      const input = crearLibroSocietarioSchema.parse(req.body);
+      const libro = await container.get(CrearLibroSocietario).ejecutar(req.auth, input);
+      res.status(201).json(libro);
+    }),
+  );
+
+  router.get(
+    "/libros-societarios",
+    authMiddleware,
+    asyncHandler(async (req, res) => {
+      if (!req.auth) throw AppError.unauthorized();
+      const filtros = {
+        empresaId: req.query.empresaId ? z.string().uuid().parse(req.query.empresaId) : undefined,
+        tipo: req.query.tipo ? z.enum(TIPOS_LIBRO_SOCIETARIO).parse(req.query.tipo) : undefined,
+        estado: req.query.estado ? z.enum(ESTADOS_LIBRO_SOCIETARIO).parse(req.query.estado) : undefined,
+      };
+      const libros = await container.get(ListarLibrosSocietarios).ejecutar(req.auth.tenantId, filtros);
+      res.status(200).json(libros);
+    }),
+  );
+
+  router.post(
+    "/libros-societarios/:id",
+    authMiddleware,
+    asyncHandler(async (req, res) => {
+      if (!req.auth) throw AppError.unauthorized();
+      const libroId = z.string().uuid().parse(req.params.id);
+      const input = editarLibroSocietarioSchema.parse(req.body);
+      const libro = await container.get(EditarLibroSocietario).ejecutar(req.auth, libroId, input);
+      res.status(200).json(libro);
+    }),
+  );
+
+  router.delete(
+    "/libros-societarios/:id",
+    authMiddleware,
+    asyncHandler(async (req, res) => {
+      if (!req.auth) throw AppError.unauthorized();
+      const libroId = z.string().uuid().parse(req.params.id);
+      await container.get(EliminarLibroSocietario).ejecutar(req.auth, libroId);
+      res.status(204).send();
     }),
   );
 

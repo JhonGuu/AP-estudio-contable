@@ -115,3 +115,54 @@ export const vencimientoFiscal = pgTable(
     index("vencimiento_fiscal_estado_idx").on(table.estado),
   ],
 );
+
+// --- libros societarios (ver domain/LibroSocietario.ts) ---
+// Misma forma que vencimiento_fiscal: referencia tenant directo, empresa_id
+// NO nullable (todo libro rubricado es de una sociedad-cliente puntual).
+
+export const tipoLibroSocietarioEnum = pgEnum("tipo_libro_societario", [
+  "ACTAS_DIRECTORIO",
+  "ACTAS_ASAMBLEA",
+  "ACTAS_REUNION_SOCIOS_GERENCIA",
+  "REGISTRO_ACCIONES",
+  "DEPOSITO_ACCIONES_ASISTENCIA",
+  "DIARIO",
+  "INVENTARIO_Y_BALANCES",
+  "OTRO",
+]);
+
+export const estadoLibroSocietarioEnum = pgEnum("estado_libro_societario", [
+  "EN_USO",
+  "COMPLETO",
+  "EXTRAVIADO",
+]);
+
+export const libroSocietario = pgTable(
+  "libro_societario",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    tenantId: uuid("tenant_id")
+      .notNull()
+      .references(() => tenant.id, { onDelete: "restrict" }),
+    empresaId: uuid("empresa_id")
+      .notNull()
+      .references(() => empresa.id, { onDelete: "restrict" }),
+    tipo: tipoLibroSocietarioEnum("tipo").notNull(),
+    numero: integer("numero").notNull(),
+    cantidadFolios: integer("cantidad_folios"),
+    ultimoFolioUtilizado: integer("ultimo_folio_utilizado"),
+    fechaRubrica: timestamp("fecha_rubrica", { withTimezone: true }),
+    ubicacion: varchar("ubicacion", { length: 200 }),
+    estado: estadoLibroSocietarioEnum("estado").notNull().default("EN_USO"),
+    observaciones: varchar("observaciones", { length: 2000 }),
+    creadoPorUsuarioId: uuid("creado_por_usuario_id")
+      .notNull()
+      .references(() => usuario.id, { onDelete: "restrict" }),
+    fechaCreacion: timestamp("fecha_creacion", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    index("libro_societario_tenant_id_idx").on(table.tenantId),
+    index("libro_societario_empresa_id_idx").on(table.empresaId),
+    index("libro_societario_estado_idx").on(table.estado),
+  ],
+);

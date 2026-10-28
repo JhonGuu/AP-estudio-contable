@@ -10,6 +10,7 @@ import { ReportesPage } from "./pages/reportes/ReportesPage";
 import { EstudioPage } from "./pages/estudio/EstudioPage";
 import { VencimientosPage } from "./pages/vencimientos/VencimientosPage";
 import { MonotributoPage } from "./pages/monotributo/MonotributoPage";
+import { LibrosSocietariosPage } from "./pages/libros-societarios/LibrosSocietariosPage";
 import { ProtectedLayout } from "./components/layout/ProtectedLayout";
 
 /**
@@ -95,6 +96,12 @@ const monotributoRoute = createRoute({
   component: MonotributoPage,
 });
 
+const librosSocietariosRoute = createRoute({
+  getParentRoute: () => protectedRoute,
+  path: "/libros-societarios",
+  component: LibrosSocietariosPage,
+});
+
 const routeTree = rootRoute.addChildren([
   loginRoute,
   protectedRoute.addChildren([
@@ -108,6 +115,7 @@ const routeTree = rootRoute.addChildren([
     estudioRoute,
     vencimientosRoute,
     monotributoRoute,
+    librosSocietariosRoute,
   ]),
 ]);
 

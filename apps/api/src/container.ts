@@ -100,6 +100,11 @@ import { MarcarEstadoVencimiento } from "./modules/estudio/use-cases/MarcarEstad
 import { EliminarVencimiento } from "./modules/estudio/use-cases/EliminarVencimiento.js";
 import { ObtenerPanelMonotributo } from "./modules/estudio/use-cases/ObtenerPanelMonotributo.js";
 import { ActualizarCategoriaMonotributo } from "./modules/estudio/use-cases/ActualizarCategoriaMonotributo.js";
+import { LibroSocietarioRepository } from "./modules/estudio/infra/LibroSocietarioRepository.js";
+import { CrearLibroSocietario } from "./modules/estudio/use-cases/CrearLibroSocietario.js";
+import { ListarLibrosSocietarios } from "./modules/estudio/use-cases/ListarLibrosSocietarios.js";
+import { EditarLibroSocietario } from "./modules/estudio/use-cases/EditarLibroSocietario.js";
+import { EliminarLibroSocietario } from "./modules/estudio/use-cases/EliminarLibroSocietario.js";
 
 /**
  * Composition root. Un unico container para todo el proceso: cada modulo nuevo
@@ -216,6 +221,7 @@ export function buildContainer(): Container {
   // --- estudio: infra ---
   container.bind(TareaRepository).toSelf().inSingletonScope();
   container.bind(VencimientoRepository).toSelf().inSingletonScope();
+  container.bind(LibroSocietarioRepository).toSelf().inSingletonScope();
 
   // --- estudio: use-cases ---
   container.bind(CrearTarea).toSelf();
@@ -229,6 +235,10 @@ export function buildContainer(): Container {
   container.bind(EliminarVencimiento).toSelf();
   container.bind(ObtenerPanelMonotributo).toSelf();
   container.bind(ActualizarCategoriaMonotributo).toSelf();
+  container.bind(CrearLibroSocietario).toSelf();
+  container.bind(ListarLibrosSocietarios).toSelf();
+  container.bind(EditarLibroSocietario).toSelf();
+  container.bind(EliminarLibroSocietario).toSelf();
 
   return container;
 }

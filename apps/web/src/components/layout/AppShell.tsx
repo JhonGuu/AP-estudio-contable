@@ -15,6 +15,7 @@ const NAV_ITEMS = [
   { to: "/estudio", label: "Gestion del estudio" },
   { to: "/vencimientos", label: "Vencimientos" },
   { to: "/monotributo", label: "Monotributo" },
+  { to: "/libros-societarios", label: "Libros societarios" },
 ];
 
 /**
