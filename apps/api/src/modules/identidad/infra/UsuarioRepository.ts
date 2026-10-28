@@ -1,4 +1,4 @@
-import { eq } from "drizzle-orm";
+import { eq, asc } from "drizzle-orm";
 import { inject, injectable } from "inversify";
 import type { Database } from "../../../shared/db/client.js";
 import { TYPES } from "../../../types.js";
@@ -52,5 +52,14 @@ export class UsuarioRepository {
 
   async marcarUltimoLogin(id: string, cuando: Date): Promise<void> {
     await this.db.update(usuario).set({ lastLoginAt: cuando }).where(eq(usuario.id, id));
+  }
+
+  /** Personal del estudio (nota 06) — usado para asignar tareas en el modulo "estudio". */
+  async listarPorTenant(tenantId: string): Promise<Usuario[]> {
+    const rows = await this.db.query.usuario.findMany({
+      where: eq(usuario.tenantId, tenantId),
+      orderBy: [asc(usuario.nombre), asc(usuario.apellido)],
+    });
+    return rows.map(toDomain);
   }
 }

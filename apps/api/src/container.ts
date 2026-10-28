@@ -19,6 +19,7 @@ import { CrearEmpresa } from "./modules/identidad/use-cases/CrearEmpresa.js";
 import { ListarEmpresas } from "./modules/identidad/use-cases/ListarEmpresas.js";
 import { InvitarUsuario } from "./modules/identidad/use-cases/InvitarUsuario.js";
 import { AsignarUsuarioEmpresa } from "./modules/identidad/use-cases/AsignarUsuarioEmpresa.js";
+import { ListarUsuarios } from "./modules/identidad/use-cases/ListarUsuarios.js";
 
 import { PlanCuentaRepository } from "./modules/contabilidad/infra/PlanCuentaRepository.js";
 import { EjercicioRepository } from "./modules/contabilidad/infra/EjercicioRepository.js";
@@ -86,6 +87,13 @@ import { ImportarExtractoBancario } from "./modules/tesoreria/use-cases/Importar
 import { ListarConciliacion } from "./modules/tesoreria/use-cases/ListarConciliacion.js";
 import { ConciliarLineaManual } from "./modules/tesoreria/use-cases/ConciliarLineaManual.js";
 
+import { TareaRepository } from "./modules/estudio/infra/TareaRepository.js";
+import { CrearTarea } from "./modules/estudio/use-cases/CrearTarea.js";
+import { ListarTareas } from "./modules/estudio/use-cases/ListarTareas.js";
+import { CambiarEstadoTarea } from "./modules/estudio/use-cases/CambiarEstadoTarea.js";
+import { AgregarItemChecklist } from "./modules/estudio/use-cases/AgregarItemChecklist.js";
+import { MarcarItemChecklist } from "./modules/estudio/use-cases/MarcarItemChecklist.js";
+
 /**
  * Composition root. Un unico container para todo el proceso: cada modulo nuevo
  * (contabilidad, compras, ventas, fiscal, tesoreria, stock, sueldos) agrega
@@ -115,6 +123,7 @@ export function buildContainer(): Container {
   container.bind(ListarEmpresas).toSelf();
   container.bind(InvitarUsuario).toSelf();
   container.bind(AsignarUsuarioEmpresa).toSelf();
+  container.bind(ListarUsuarios).toSelf();
 
   // --- contabilidad: infra ---
   container.bind(PlanCuentaRepository).toSelf().inSingletonScope();
@@ -196,6 +205,16 @@ export function buildContainer(): Container {
   container.bind(ImportarExtractoBancario).toSelf();
   container.bind(ListarConciliacion).toSelf();
   container.bind(ConciliarLineaManual).toSelf();
+
+  // --- estudio: infra ---
+  container.bind(TareaRepository).toSelf().inSingletonScope();
+
+  // --- estudio: use-cases ---
+  container.bind(CrearTarea).toSelf();
+  container.bind(ListarTareas).toSelf();
+  container.bind(CambiarEstadoTarea).toSelf();
+  container.bind(AgregarItemChecklist).toSelf();
+  container.bind(MarcarItemChecklist).toSelf();
 
   return container;
 }

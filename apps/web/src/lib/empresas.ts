@@ -1,4 +1,4 @@
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { apiFetch } from "./api-client";
 
 export interface Empresa {
@@ -24,6 +24,18 @@ export interface NuevaEmpresaInput {
   actividadAfip: string;
   monedaBaseId: string;
   cierreEjercicio: string;
+}
+
+/**
+ * GET /empresas — mismo queryKey que usa SessionProvider internamente, asi
+ * que React Query deduplica el fetch en vez de pedirlo dos veces. Usado por
+ * el modulo "estudio" para el selector de cliente al crear/filtrar tareas.
+ */
+export function useEmpresas() {
+  return useQuery({
+    queryKey: ["empresas"],
+    queryFn: () => apiFetch<Empresa[]>("/empresas"),
+  });
 }
 
 /**

@@ -13,6 +13,7 @@ import { buildComprasRouter } from "./modules/compras/routes.js";
 import { buildVentasRouter } from "./modules/ventas/routes.js";
 import { buildTesoreriaRouter } from "./modules/tesoreria/routes.js";
 import { buildContabilidadRouter } from "./modules/contabilidad/routes.js";
+import { buildEstudioRouter } from "./modules/estudio/routes.js";
 
 /**
  * Ensambla la app de Express a partir de un container ya construido (ver
@@ -40,6 +41,7 @@ export function buildApp(container: Container): Express {
   app.use("/ventas", buildVentasRouter(container));
   app.use("/tesoreria", buildTesoreriaRouter(container));
   app.use("/contabilidad", buildContabilidadRouter(container));
+  app.use("/estudio", buildEstudioRouter(container));
 
   app.use((req, res) => {
     res.status(404).json({ error: { message: "Ruta no encontrada", code: "NOT_FOUND" } });

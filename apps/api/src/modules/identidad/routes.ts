@@ -12,6 +12,7 @@ import { CrearEmpresa } from "./use-cases/CrearEmpresa.js";
 import { ListarEmpresas } from "./use-cases/ListarEmpresas.js";
 import { InvitarUsuario } from "./use-cases/InvitarUsuario.js";
 import { AsignarUsuarioEmpresa } from "./use-cases/AsignarUsuarioEmpresa.js";
+import { ListarUsuarios } from "./use-cases/ListarUsuarios.js";
 import { ROLES_GLOBALES, ROLES_EMPRESA } from "./domain/roles.js";
 
 const crearTenantSchema = z.object({
@@ -130,6 +131,16 @@ export function buildIdentidadRouter(container: Container): Router {
       const input = invitarUsuarioSchema.parse(req.body);
       const result = await container.get(InvitarUsuario).ejecutar(req.auth, input);
       res.status(201).json(result);
+    }),
+  );
+
+  router.get(
+    "/usuarios",
+    authMiddleware,
+    asyncHandler(async (req, res) => {
+      if (!req.auth) throw AppError.unauthorized();
+      const usuarios = await container.get(ListarUsuarios).ejecutar(req.auth.tenantId);
+      res.status(200).json(usuarios);
     }),
   );
 

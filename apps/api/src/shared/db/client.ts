@@ -8,6 +8,7 @@ import * as comprobantesSchema from "../../modules/comprobantes/infra/schema.js"
 import * as comprasSchema from "../../modules/compras/infra/schema.js";
 import * as ventasSchema from "../../modules/ventas/infra/schema.js";
 import * as tesoreriaSchema from "../../modules/tesoreria/infra/schema.js";
+import * as estudioSchema from "../../modules/estudio/infra/schema.js";
 
 /**
  * Un unico pool de conexiones para todo el proceso. Todos los schemas de
@@ -24,6 +25,7 @@ export const schema = {
   ...comprasSchema,
   ...ventasSchema,
   ...tesoreriaSchema,
+  ...estudioSchema,
 };
 
 export const pool = new Pool({ connectionString: env.DATABASE_URL });
