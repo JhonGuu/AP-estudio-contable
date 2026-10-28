@@ -8,6 +8,7 @@ import { ComprobantesVentaPage } from "./pages/comprobantes-venta/ComprobantesVe
 import { TesoreriaPage } from "./pages/tesoreria/TesoreriaPage";
 import { ReportesPage } from "./pages/reportes/ReportesPage";
 import { EstudioPage } from "./pages/estudio/EstudioPage";
+import { VencimientosPage } from "./pages/vencimientos/VencimientosPage";
 import { ProtectedLayout } from "./components/layout/ProtectedLayout";
 
 /**
@@ -81,6 +82,12 @@ const estudioRoute = createRoute({
   component: EstudioPage,
 });
 
+const vencimientosRoute = createRoute({
+  getParentRoute: () => protectedRoute,
+  path: "/vencimientos",
+  component: VencimientosPage,
+});
+
 const routeTree = rootRoute.addChildren([
   loginRoute,
   protectedRoute.addChildren([
@@ -92,6 +99,7 @@ const routeTree = rootRoute.addChildren([
     tesoreriaRoute,
     reportesRoute,
     estudioRoute,
+    vencimientosRoute,
   ]),
 ]);
 

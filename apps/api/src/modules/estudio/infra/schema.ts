@@ -69,3 +69,49 @@ export const tareaEstudioRelations = relations(tareaEstudio, ({ many }) => ({
 export const tareaEstudioItemRelations = relations(tareaEstudioItem, ({ one }) => ({
   tarea: one(tareaEstudio, { fields: [tareaEstudioItem.tareaId], references: [tareaEstudio.id] }),
 }));
+
+// --- calendario de vencimientos multi-cliente (ver domain/VencimientoFiscal.ts) ---
+// Igual que tarea_estudio, referencia tenant directo (modulo a nivel tenant),
+// pero aca empresa_id NO es nullable: todo vencimiento fiscal es de un cliente.
+
+export const tipoVencimientoEnum = pgEnum("tipo_vencimiento", [
+  "IVA",
+  "GANANCIAS",
+  "MONOTRIBUTO",
+  "INGRESOS_BRUTOS",
+  "SICORE",
+  "SUELDOS",
+  "OTRO",
+]);
+
+export const estadoVencimientoEnum = pgEnum("estado_vencimiento", ["PENDIENTE", "CUMPLIDO"]);
+
+export const vencimientoFiscal = pgTable(
+  "vencimiento_fiscal",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    tenantId: uuid("tenant_id")
+      .notNull()
+      .references(() => tenant.id, { onDelete: "restrict" }),
+    empresaId: uuid("empresa_id")
+      .notNull()
+      .references(() => empresa.id, { onDelete: "restrict" }),
+    tipo: tipoVencimientoEnum("tipo").notNull(),
+    descripcion: varchar("descripcion", { length: 200 }),
+    periodo: varchar("periodo", { length: 20 }),
+    fechaVencimiento: timestamp("fecha_vencimiento", { withTimezone: true }).notNull(),
+    estado: estadoVencimientoEnum("estado").notNull().default("PENDIENTE"),
+    fechaCumplido: timestamp("fecha_cumplido", { withTimezone: true }),
+    asignadoAUsuarioId: uuid("asignado_a_usuario_id").references(() => usuario.id, { onDelete: "restrict" }),
+    creadoPorUsuarioId: uuid("creado_por_usuario_id")
+      .notNull()
+      .references(() => usuario.id, { onDelete: "restrict" }),
+    fechaCreacion: timestamp("fecha_creacion", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    index("vencimiento_fiscal_tenant_id_idx").on(table.tenantId),
+    index("vencimiento_fiscal_empresa_id_idx").on(table.empresaId),
+    index("vencimiento_fiscal_fecha_vencimiento_idx").on(table.fechaVencimiento),
+    index("vencimiento_fiscal_estado_idx").on(table.estado),
+  ],
+);

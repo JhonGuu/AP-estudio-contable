@@ -93,6 +93,11 @@ import { ListarTareas } from "./modules/estudio/use-cases/ListarTareas.js";
 import { CambiarEstadoTarea } from "./modules/estudio/use-cases/CambiarEstadoTarea.js";
 import { AgregarItemChecklist } from "./modules/estudio/use-cases/AgregarItemChecklist.js";
 import { MarcarItemChecklist } from "./modules/estudio/use-cases/MarcarItemChecklist.js";
+import { VencimientoRepository } from "./modules/estudio/infra/VencimientoRepository.js";
+import { CrearVencimiento } from "./modules/estudio/use-cases/CrearVencimiento.js";
+import { ListarVencimientos } from "./modules/estudio/use-cases/ListarVencimientos.js";
+import { MarcarEstadoVencimiento } from "./modules/estudio/use-cases/MarcarEstadoVencimiento.js";
+import { EliminarVencimiento } from "./modules/estudio/use-cases/EliminarVencimiento.js";
 
 /**
  * Composition root. Un unico container para todo el proceso: cada modulo nuevo
@@ -208,6 +213,7 @@ export function buildContainer(): Container {
 
   // --- estudio: infra ---
   container.bind(TareaRepository).toSelf().inSingletonScope();
+  container.bind(VencimientoRepository).toSelf().inSingletonScope();
 
   // --- estudio: use-cases ---
   container.bind(CrearTarea).toSelf();
@@ -215,6 +221,10 @@ export function buildContainer(): Container {
   container.bind(CambiarEstadoTarea).toSelf();
   container.bind(AgregarItemChecklist).toSelf();
   container.bind(MarcarItemChecklist).toSelf();
+  container.bind(CrearVencimiento).toSelf();
+  container.bind(ListarVencimientos).toSelf();
+  container.bind(MarcarEstadoVencimiento).toSelf();
+  container.bind(EliminarVencimiento).toSelf();
 
   return container;
 }

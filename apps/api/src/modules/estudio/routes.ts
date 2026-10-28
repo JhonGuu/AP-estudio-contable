@@ -9,7 +9,12 @@ import { ListarTareas } from "./use-cases/ListarTareas.js";
 import { CambiarEstadoTarea } from "./use-cases/CambiarEstadoTarea.js";
 import { AgregarItemChecklist } from "./use-cases/AgregarItemChecklist.js";
 import { MarcarItemChecklist } from "./use-cases/MarcarItemChecklist.js";
+import { CrearVencimiento } from "./use-cases/CrearVencimiento.js";
+import { ListarVencimientos } from "./use-cases/ListarVencimientos.js";
+import { MarcarEstadoVencimiento } from "./use-cases/MarcarEstadoVencimiento.js";
+import { EliminarVencimiento } from "./use-cases/EliminarVencimiento.js";
 import { ESTADOS_TAREA } from "./domain/TareaEstudio.js";
+import { ESTADOS_VENCIMIENTO, TIPOS_VENCIMIENTO } from "./domain/VencimientoFiscal.js";
 
 const crearTareaSchema = z.object({
   empresaId: z.string().uuid().nullable().optional(),
@@ -29,6 +34,19 @@ const agregarItemSchema = z.object({
 
 const marcarItemSchema = z.object({
   completado: z.boolean(),
+});
+
+const crearVencimientoSchema = z.object({
+  empresaId: z.string().uuid(),
+  tipo: z.enum(TIPOS_VENCIMIENTO),
+  descripcion: z.string().max(200).nullable().optional(),
+  periodo: z.string().max(20).nullable().optional(),
+  fechaVencimiento: z.coerce.date(),
+  asignadoAUsuarioId: z.string().uuid().nullable().optional(),
+});
+
+const marcarEstadoVencimientoSchema = z.object({
+  estado: z.enum(ESTADOS_VENCIMIENTO),
 });
 
 /**
@@ -100,6 +118,59 @@ export function buildEstudioRouter(container: Container): Router {
       const { completado } = marcarItemSchema.parse(req.body);
       const item = await container.get(MarcarItemChecklist).ejecutar(req.auth, itemId, completado);
       res.status(200).json(item);
+    }),
+  );
+
+  // --- calendario de vencimientos multi-cliente (ver domain/VencimientoFiscal.ts) ---
+
+  router.post(
+    "/vencimientos",
+    authMiddleware,
+    asyncHandler(async (req, res) => {
+      if (!req.auth) throw AppError.unauthorized();
+      const input = crearVencimientoSchema.parse(req.body);
+      const vencimiento = await container.get(CrearVencimiento).ejecutar(req.auth, input);
+      res.status(201).json(vencimiento);
+    }),
+  );
+
+  router.get(
+    "/vencimientos",
+    authMiddleware,
+    asyncHandler(async (req, res) => {
+      if (!req.auth) throw AppError.unauthorized();
+      const filtros = {
+        empresaId: req.query.empresaId ? z.string().uuid().parse(req.query.empresaId) : undefined,
+        tipo: req.query.tipo ? z.enum(TIPOS_VENCIMIENTO).parse(req.query.tipo) : undefined,
+        estado: req.query.estado ? z.enum(ESTADOS_VENCIMIENTO).parse(req.query.estado) : undefined,
+        desde: req.query.desde ? z.coerce.date().parse(req.query.desde) : undefined,
+        hasta: req.query.hasta ? z.coerce.date().parse(req.query.hasta) : undefined,
+      };
+      const vencimientos = await container.get(ListarVencimientos).ejecutar(req.auth.tenantId, filtros);
+      res.status(200).json(vencimientos);
+    }),
+  );
+
+  router.post(
+    "/vencimientos/:id/estado",
+    authMiddleware,
+    asyncHandler(async (req, res) => {
+      if (!req.auth) throw AppError.unauthorized();
+      const vencimientoId = z.string().uuid().parse(req.params.id);
+      const { estado } = marcarEstadoVencimientoSchema.parse(req.body);
+      const vencimiento = await container.get(MarcarEstadoVencimiento).ejecutar(req.auth, vencimientoId, estado);
+      res.status(200).json(vencimiento);
+    }),
+  );
+
+  router.delete(
+    "/vencimientos/:id",
+    authMiddleware,
+    asyncHandler(async (req, res) => {
+      if (!req.auth) throw AppError.unauthorized();
+      const vencimientoId = z.string().uuid().parse(req.params.id);
+      await container.get(EliminarVencimiento).ejecutar(req.auth, vencimientoId);
+      res.status(204).send();
     }),
   );
 
