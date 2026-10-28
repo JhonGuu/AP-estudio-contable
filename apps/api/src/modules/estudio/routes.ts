@@ -13,6 +13,8 @@ import { CrearVencimiento } from "./use-cases/CrearVencimiento.js";
 import { ListarVencimientos } from "./use-cases/ListarVencimientos.js";
 import { MarcarEstadoVencimiento } from "./use-cases/MarcarEstadoVencimiento.js";
 import { EliminarVencimiento } from "./use-cases/EliminarVencimiento.js";
+import { ObtenerPanelMonotributo } from "./use-cases/ObtenerPanelMonotributo.js";
+import { ActualizarCategoriaMonotributo } from "./use-cases/ActualizarCategoriaMonotributo.js";
 import { ESTADOS_TAREA } from "./domain/TareaEstudio.js";
 import { ESTADOS_VENCIMIENTO, TIPOS_VENCIMIENTO } from "./domain/VencimientoFiscal.js";
 
@@ -47,6 +49,10 @@ const crearVencimientoSchema = z.object({
 
 const marcarEstadoVencimientoSchema = z.object({
   estado: z.enum(ESTADOS_VENCIMIENTO),
+});
+
+const actualizarCategoriaMonotributoSchema = z.object({
+  categoriaMonotributoId: z.string().uuid().nullable(),
 });
 
 /**
@@ -171,6 +177,32 @@ export function buildEstudioRouter(container: Container): Router {
       const vencimientoId = z.string().uuid().parse(req.params.id);
       await container.get(EliminarVencimiento).ejecutar(req.auth, vencimientoId);
       res.status(204).send();
+    }),
+  );
+
+  // --- panel de monotributo (ver domain/PanelMonotributo.ts) ---
+
+  router.get(
+    "/monotributo",
+    authMiddleware,
+    asyncHandler(async (req, res) => {
+      if (!req.auth) throw AppError.unauthorized();
+      const panel = await container.get(ObtenerPanelMonotributo).ejecutar(req.auth.tenantId);
+      res.status(200).json(panel);
+    }),
+  );
+
+  router.post(
+    "/monotributo/:empresaId/categoria",
+    authMiddleware,
+    asyncHandler(async (req, res) => {
+      if (!req.auth) throw AppError.unauthorized();
+      const empresaId = z.string().uuid().parse(req.params.empresaId);
+      const { categoriaMonotributoId } = actualizarCategoriaMonotributoSchema.parse(req.body);
+      const empresa = await container
+        .get(ActualizarCategoriaMonotributo)
+        .ejecutar(req.auth, empresaId, categoriaMonotributoId);
+      res.status(200).json(empresa);
     }),
   );
 

@@ -14,11 +14,12 @@ export class CatalogoRepository {
   constructor(@inject(TYPES.Database) private readonly db: Database) {}
 
   async obtenerTodos(): Promise<Catalogos> {
-    const [monedas, provincias, condicionesIva, tiposDocumento] = await Promise.all([
+    const [monedas, provincias, condicionesIva, tiposDocumento, categoriasMonotributo] = await Promise.all([
       this.db.query.moneda.findMany(),
       this.db.query.provincia.findMany(),
       this.db.query.condicionIva.findMany(),
       this.db.query.tipoDocumento.findMany(),
+      this.db.query.categoriaMonotributo.findMany({ orderBy: (c, { asc }) => [asc(c.orden)] }),
     ]);
 
     return {
@@ -36,6 +37,25 @@ export class CatalogoRepository {
         nombre: t.nombre,
         longitud: t.longitud,
       })),
+      categoriasMonotributo: categoriasMonotributo.map((c) => ({
+        id: c.id,
+        codigo: c.codigo,
+        orden: c.orden,
+        topeAnualFacturacion: Number(c.topeAnualFacturacion),
+        soloVentaBienes: c.soloVentaBienes,
+      })),
     };
+  }
+
+  /** Usado por el Panel de monotributo (`estudio`) para resolver topes sin pedir todo /catalogos de nuevo. */
+  async listarCategoriasMonotributo(): Promise<Catalogos["categoriasMonotributo"]> {
+    const rows = await this.db.query.categoriaMonotributo.findMany({ orderBy: (c, { asc }) => [asc(c.orden)] });
+    return rows.map((c) => ({
+      id: c.id,
+      codigo: c.codigo,
+      orden: c.orden,
+      topeAnualFacturacion: Number(c.topeAnualFacturacion),
+      soloVentaBienes: c.soloVentaBienes,
+    }));
   }
 }

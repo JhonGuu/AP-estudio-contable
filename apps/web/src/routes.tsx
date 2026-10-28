@@ -9,6 +9,7 @@ import { TesoreriaPage } from "./pages/tesoreria/TesoreriaPage";
 import { ReportesPage } from "./pages/reportes/ReportesPage";
 import { EstudioPage } from "./pages/estudio/EstudioPage";
 import { VencimientosPage } from "./pages/vencimientos/VencimientosPage";
+import { MonotributoPage } from "./pages/monotributo/MonotributoPage";
 import { ProtectedLayout } from "./components/layout/ProtectedLayout";
 
 /**
@@ -88,6 +89,12 @@ const vencimientosRoute = createRoute({
   component: VencimientosPage,
 });
 
+const monotributoRoute = createRoute({
+  getParentRoute: () => protectedRoute,
+  path: "/monotributo",
+  component: MonotributoPage,
+});
+
 const routeTree = rootRoute.addChildren([
   loginRoute,
   protectedRoute.addChildren([
@@ -100,6 +107,7 @@ const routeTree = rootRoute.addChildren([
     reportesRoute,
     estudioRoute,
     vencimientosRoute,
+    monotributoRoute,
   ]),
 ]);
 

@@ -12,6 +12,8 @@ export interface Empresa {
   actividadAfip: string;
   monedaBaseId: string;
   cierreEjercicio: string;
+  /** Categoria de Monotributo autodeclarada (null si no aplica o no se cargo) — ver Panel de monotributo. */
+  categoriaMonotributoId: string | null;
 }
 
 export interface NuevaEmpresaInput {

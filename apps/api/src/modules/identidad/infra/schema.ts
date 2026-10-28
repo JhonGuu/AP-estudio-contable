@@ -10,7 +10,7 @@ import {
   uuid,
   varchar,
 } from "drizzle-orm/pg-core";
-import { condicionIva, moneda, provincia } from "../../catalogos/infra/schema.js";
+import { categoriaMonotributo, condicionIva, moneda, provincia } from "../../catalogos/infra/schema.js";
 
 // --- enums --- (nota 06)
 
@@ -70,6 +70,13 @@ export const empresa = pgTable(
       .references(() => moneda.id, { onDelete: "restrict" }),
     cierreEjercicio: varchar("cierre_ejercicio", { length: 5 }).notNull(), // "MM-DD"
     estado: estadoEmpresaEnum("estado").notNull().default("ACTIVO"),
+    // Categoria de Monotributo autodeclarada por el cliente (nullable: solo
+    // aplica si condicionIva es Monotributo — ver Panel de monotributo,
+    // modulo `estudio`). No se fuerza consistencia contra condicionIvaId a
+    // nivel de base de datos: la valida ActualizarCategoriaMonotributo.
+    categoriaMonotributoId: uuid("categoria_monotributo_id").references(() => categoriaMonotributo.id, {
+      onDelete: "restrict",
+    }),
   },
   (table) => [
     index("empresa_tenant_id_idx").on(table.tenantId),
@@ -148,6 +155,10 @@ export const empresaRelations = relations(empresa, ({ one, many }) => ({
   condicionIva: one(condicionIva, { fields: [empresa.condicionIvaId], references: [condicionIva.id] }),
   provincia: one(provincia, { fields: [empresa.provinciaId], references: [provincia.id] }),
   monedaBase: one(moneda, { fields: [empresa.monedaBaseId], references: [moneda.id] }),
+  categoriaMonotributo: one(categoriaMonotributo, {
+    fields: [empresa.categoriaMonotributoId],
+    references: [categoriaMonotributo.id],
+  }),
   modulosActivos: many(empresaModulo),
   usuarios: many(usuarioEmpresa),
 }));

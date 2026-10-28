@@ -43,6 +43,13 @@
       "when": 1793146512969,
       "tag": "0005_young_blacklash",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1793147441883,
+      "tag": "0006_absent_the_fallen",
+      "breakpoints": true
     }
   ]
 }

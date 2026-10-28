@@ -65,7 +65,14 @@ export function useCrearComprobanteVenta() {
   });
 }
 
-/** POST /ventas/comprobantes/:id/confirmar — dispara ASIENTO_VENTA, ya no se puede editar. */
+/**
+ * POST /ventas/comprobantes/:id/confirmar — dispara ASIENTO_VENTA, ya no se
+ * puede editar. Tambien invalida el panel de monotributo (gap nuevo, ver
+ * claude/modulos-nacional-sistema-y-gap-estudio-contable.md, seccion 3): la
+ * facturacion acumulada que muestra se calcula sobre ventas CONFIRMADO, asi
+ * que confirmar un comprobante puede mover a un cliente a ALERTA/EXCEDIDO y
+ * conviene que se vea sin esperar los 30s de staleTime por defecto.
+ */
 export function useConfirmarComprobanteVenta() {
   const queryClient = useQueryClient();
   return useMutation({
@@ -76,6 +83,7 @@ export function useConfirmarComprobanteVenta() {
       }),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ["comprobantes-venta"] });
+      void queryClient.invalidateQueries({ queryKey: ["monotributo"] });
     },
   });
 }

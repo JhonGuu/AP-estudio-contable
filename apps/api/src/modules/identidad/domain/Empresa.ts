@@ -22,4 +22,6 @@ export interface Empresa {
   cierreEjercicio: string; // "MM-DD"
   estado: EstadoEmpresa;
   modulosActivos: ModuloActivable[];
+  /** Categoria de Monotributo autodeclarada (null si no aplica o no se cargo todavia) — ver Panel de monotributo. */
+  categoriaMonotributoId: string | null;
 }

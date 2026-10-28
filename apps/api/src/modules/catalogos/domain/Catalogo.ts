@@ -32,9 +32,18 @@ export interface TipoDocumento {
   longitud: number | null;
 }
 
+export interface CategoriaMonotributo {
+  id: string;
+  codigo: string;
+  orden: number;
+  topeAnualFacturacion: number;
+  soloVentaBienes: boolean;
+}
+
 export interface Catalogos {
   monedas: Moneda[];
   provincias: Provincia[];
   condicionesIva: CondicionIva[];
   tiposDocumento: TipoDocumento[];
+  categoriasMonotributo: CategoriaMonotributo[];
 }

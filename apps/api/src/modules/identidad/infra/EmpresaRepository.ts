@@ -20,6 +20,7 @@ function toDomain(row: typeof empresa.$inferSelect, modulosActivos: ModuloActiva
     cierreEjercicio: row.cierreEjercicio,
     estado: row.estado,
     modulosActivos,
+    categoriaMonotributoId: row.categoriaMonotributoId,
   };
 }
 
@@ -72,5 +73,17 @@ export class EmpresaRepository {
 
   async activarModulo(empresaId: string, modulo: ModuloActivable): Promise<void> {
     await this.db.insert(empresaModulo).values({ empresaId, modulo }).onConflictDoNothing();
+  }
+
+  /** Usado por el Panel de monotributo (`estudio`) — `categoriaMonotributoId: null` des-categoriza. */
+  async actualizarCategoriaMonotributo(empresaId: string, categoriaMonotributoId: string | null): Promise<Empresa> {
+    const [row] = await this.db
+      .update(empresa)
+      .set({ categoriaMonotributoId })
+      .where(eq(empresa.id, empresaId))
+      .returning();
+    if (!row) throw new Error("No se pudo actualizar la categoria de monotributo");
+    const modulos = await this.db.query.empresaModulo.findMany({ where: eq(empresaModulo.empresaId, empresaId) });
+    return toDomain(row, modulos.map((m) => m.modulo));
   }
 }

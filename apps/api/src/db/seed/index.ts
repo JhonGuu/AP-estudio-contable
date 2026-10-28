@@ -1,6 +1,6 @@
 import "dotenv/config";
 import { db, pool } from "../../shared/db/client.js";
-import { moneda, provincia, condicionIva, tipoDocumento } from "../../modules/catalogos/infra/schema.js";
+import { moneda, provincia, condicionIva, tipoDocumento, categoriaMonotributo } from "../../modules/catalogos/infra/schema.js";
 import { tipoComprobante } from "../../modules/comprobantes/infra/schema.js";
 import { modeloAsientoPlantilla, modeloAsientoPlantillaMovimiento } from "../../modules/contabilidad/infra/schema.js";
 
@@ -80,6 +80,31 @@ const TIPOS_DOCUMENTO = [
   { codigoAfip: "96", nombre: "DNI", longitud: 8 },
   { codigoAfip: "94", nombre: "Pasaporte", longitud: null },
   { codigoAfip: "99", nombre: "Consumidor Final / Sin identificar", longitud: null },
+];
+
+/**
+ * Topes anuales de facturacion por categoria de Monotributo, vigentes desde
+ * el 1/08/2026 (actualizacion semestral de ARCA — la proxima se espera para
+ * febrero 2027). Fuente al momento de escribir este seed: fiscal.com.ar y
+ * wynges.com, cruzadas entre si. ANTES DE USAR EN PRODUCCION (y en cada
+ * actualizacion semestral), verificar contra la tabla oficial vigente en
+ * https://www.arca.gob.ar — este seed NO se actualiza solo.
+ * `soloVentaBienes`: I/J/K solo estan disponibles para venta de cosas
+ * muebles, un prestador de servicios tiene su techo en H (ver nota en
+ * modules/catalogos/infra/schema.ts).
+ */
+const CATEGORIAS_MONOTRIBUTO = [
+  { codigo: "A", orden: 1, topeAnualFacturacion: "12009410.45", soloVentaBienes: false },
+  { codigo: "B", orden: 2, topeAnualFacturacion: "17595182.74", soloVentaBienes: false },
+  { codigo: "C", orden: 3, topeAnualFacturacion: "24670494.31", soloVentaBienes: false },
+  { codigo: "D", orden: 4, topeAnualFacturacion: "30628651.43", soloVentaBienes: false },
+  { codigo: "E", orden: 5, topeAnualFacturacion: "36028231.33", soloVentaBienes: false },
+  { codigo: "F", orden: 6, topeAnualFacturacion: "45151659.41", soloVentaBienes: false },
+  { codigo: "G", orden: 7, topeAnualFacturacion: "53995798.87", soloVentaBienes: false },
+  { codigo: "H", orden: 8, topeAnualFacturacion: "81924660.37", soloVentaBienes: false },
+  { codigo: "I", orden: 9, topeAnualFacturacion: "91699761.90", soloVentaBienes: true },
+  { codigo: "J", orden: 10, topeAnualFacturacion: "105012519.20", soloVentaBienes: true },
+  { codigo: "K", orden: 11, topeAnualFacturacion: "126610838.75", soloVentaBienes: true },
 ];
 
 const TIPOS_COMPROBANTE = [
@@ -180,6 +205,11 @@ async function seedTiposDocumento() {
   console.log(`  tipo_documento: ${TIPOS_DOCUMENTO.length} filas (idempotente)`);
 }
 
+async function seedCategoriasMonotributo() {
+  await db.insert(categoriaMonotributo).values(CATEGORIAS_MONOTRIBUTO).onConflictDoNothing({ target: categoriaMonotributo.codigo });
+  console.log(`  categoria_monotributo: ${CATEGORIAS_MONOTRIBUTO.length} filas (idempotente)`);
+}
+
 async function seedTiposComprobante() {
   await db.insert(tipoComprobante).values(TIPOS_COMPROBANTE).onConflictDoNothing({ target: tipoComprobante.codigo });
   console.log(`  tipo_comprobante: ${TIPOS_COMPROBANTE.length} filas (idempotente)`);
@@ -215,6 +245,7 @@ async function main() {
   await seedProvincias();
   await seedCondicionesIva();
   await seedTiposDocumento();
+  await seedCategoriasMonotributo();
   await seedTiposComprobante();
   await seedModelosAsientoPlantilla();
   console.log("Listo.");

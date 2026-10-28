@@ -98,6 +98,8 @@ import { CrearVencimiento } from "./modules/estudio/use-cases/CrearVencimiento.j
 import { ListarVencimientos } from "./modules/estudio/use-cases/ListarVencimientos.js";
 import { MarcarEstadoVencimiento } from "./modules/estudio/use-cases/MarcarEstadoVencimiento.js";
 import { EliminarVencimiento } from "./modules/estudio/use-cases/EliminarVencimiento.js";
+import { ObtenerPanelMonotributo } from "./modules/estudio/use-cases/ObtenerPanelMonotributo.js";
+import { ActualizarCategoriaMonotributo } from "./modules/estudio/use-cases/ActualizarCategoriaMonotributo.js";
 
 /**
  * Composition root. Un unico container para todo el proceso: cada modulo nuevo
@@ -225,6 +227,8 @@ export function buildContainer(): Container {
   container.bind(ListarVencimientos).toSelf();
   container.bind(MarcarEstadoVencimiento).toSelf();
   container.bind(EliminarVencimiento).toSelf();
+  container.bind(ObtenerPanelMonotributo).toSelf();
+  container.bind(ActualizarCategoriaMonotributo).toSelf();
 
   return container;
 }

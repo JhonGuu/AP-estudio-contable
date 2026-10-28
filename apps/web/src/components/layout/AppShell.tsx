@@ -14,6 +14,7 @@ const NAV_ITEMS = [
   { to: "/reportes", label: "Reportes" },
   { to: "/estudio", label: "Gestion del estudio" },
   { to: "/vencimientos", label: "Vencimientos" },
+  { to: "/monotributo", label: "Monotributo" },
 ];
 
 /**

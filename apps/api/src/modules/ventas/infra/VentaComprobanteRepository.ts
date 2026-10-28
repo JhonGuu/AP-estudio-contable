@@ -145,6 +145,27 @@ export class VentaComprobanteRepository {
     return rows.map(toDomain);
   }
 
+  /**
+   * Suma de `importeTotal` de comprobantes CONFIRMADO de la empresa en un
+   * rango de fechas — usado por el Panel de monotributo (`estudio`) para
+   * calcular la facturacion acumulada de los ultimos 12 meses sin traer cada
+   * comprobante al use-case. 0 si no hay comprobantes en el rango.
+   */
+  async sumarImporteConfirmadoPorEmpresa(empresaId: string, desde: Date, hasta: Date): Promise<number> {
+    const [fila] = await this.db
+      .select({ total: sql<string>`COALESCE(SUM(${ventaComprobante.importeTotal}), 0)` })
+      .from(ventaComprobante)
+      .where(
+        and(
+          eq(ventaComprobante.empresaId, empresaId),
+          eq(ventaComprobante.estado, "CONFIRMADO"),
+          gte(ventaComprobante.fecha, desde),
+          lte(ventaComprobante.fecha, hasta),
+        ),
+      );
+    return Number(fila?.total ?? 0);
+  }
+
   async confirmar(id: string): Promise<void> {
     await this.db.update(ventaComprobante).set({ estado: "CONFIRMADO" }).where(eq(ventaComprobante.id, id));
   }
